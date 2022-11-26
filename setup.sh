@@ -4,6 +4,18 @@ set -euo pipefail
 
 YEAR=2021
 
+if [[ -z "${1+x}" ]]
+then
+  echo "Please provide the day as argument."
+  exit 1
+fi
+
+if [[ ! "${1}" =~ ^([1-9]|1[0-9]|2[0-4])$ ]];
+then
+  echo "Argument must be a number from 1 to 24."
+  exit 1
+fi
+
 ROOT_DIR="$(dirname "$(realpath "$0")")"
 
 if [[ "${ROOT_DIR}" != "${PWD}" ]];
