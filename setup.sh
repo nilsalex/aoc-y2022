@@ -34,20 +34,22 @@ HEADER="Cookie: session=${SESSION}"
 
 DAY="${1}"
 PACKAGE_DIR="day$(printf "%02d" "${DAY}")"
-INPUT_FILE="${PACKAGE_DIR}/input.txt"
+INPUT_FILE="${PACKAGE_DIR}/src/input.txt"
 INPUT_URL="https://adventofcode.com/${YEAR}/day/${DAY}/input"
 
-if [[ -e ${PACKAGE_DIR} ]]
-then
-  echo "Package directory ${PACKAGE_DIR} already exists. Skipping package initialization."
-else
-  cargo new \
-        --bin \
-        --edition 2021 \
-        --quiet \
-        "${PACKAGE_DIR}"
-  echo "Initialized cargo package at ${PACKAGE_DIR}"
-fi
+## if [[ -e ${PACKAGE_DIR} ]]
+## then
+##   echo "Package directory ${PACKAGE_DIR} already exists. Skipping package initialization."
+## else
+##   cargo new \
+##         --bin \
+##         --edition 2021 \
+##         --quiet \
+##         "${PACKAGE_DIR}"
+##   echo "Initialized cargo package at ${PACKAGE_DIR}"
+## fi
+
+mkdir -p "$PACKAGE_DIR"
 
 curl --silent \
      -XGET \
