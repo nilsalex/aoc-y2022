@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-YEAR=2021
+YEAR=2022
 
 if [[ -z "${1+x}" ]]
 then
