@@ -1,36 +1,42 @@
 pub const INPUT: &str = include_str!("input.txt");
 
 fn part1(input: &str) -> usize {
-    let mut count: usize = 0;
-    let mut prev: usize = usize::MAX;
+    let mut max_cals = 0;
+    let mut cur_cals = 0;
+
     input
         .lines()
-        .map(|l| l.parse::<usize>().unwrap())
-        .for_each(|x| {
-            if x > prev {
-                count += 1
+        .for_each(|l| {
+            if l.is_empty() {
+                if cur_cals > max_cals {
+                    max_cals = cur_cals
+                }
+                cur_cals = 0
+            } else {
+                cur_cals += l.parse::<usize>().unwrap();
             }
-            prev = x
         }
         );
-    count
+    max_cals
 }
 
 fn part2(input: &str) -> usize {
-    let values = input.lines().map(|l| l.parse::<usize>().unwrap()).collect::<Vec<usize>>();
+    let mut sums: Vec<usize> = Vec::new();
+    sums.push(0);
 
-    let mut count: usize = 0;
-    let mut prev: usize = usize::MAX;
-
-    for i in 2..values.len() {
-        let sum = values[i-2] + values[i-1] + values[i];
-        if sum > prev {
-            count += 1
+    input
+        .lines()
+        .for_each(|l| {
+            if l.is_empty() {
+                sums.push(0)
+            } else {
+                let cals: usize = l.parse().unwrap();
+                *sums.last_mut().unwrap() += cals;
+            }
         }
-        prev = sum
-    }
-
-    count
+        );
+    sums.sort_by(|a, b| b.cmp(a));
+    sums[0] + sums[1] + sums[2]
 }
 
 fn main() {
