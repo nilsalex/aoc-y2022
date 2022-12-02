@@ -1,3 +1,5 @@
+#![feature(test)]
+
 pub const INPUT: &[u8] = include_bytes!("input.txt");
 
 const NEWLINE: u8 = 10;
@@ -31,7 +33,10 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    extern crate test;
+
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_part1() {
@@ -41,5 +46,15 @@ mod tests {
     #[test]
     fn test_part2() {
         assert_eq!(part2(INPUT), 16098)
+    }
+
+    #[bench]
+    fn bench_part1(b: &mut Bencher) {
+        b.iter(|| part1(INPUT))
+    }
+
+    #[bench]
+    fn bench_part2(b: &mut Bencher) {
+        b.iter(|| part2(INPUT))
     }
 }

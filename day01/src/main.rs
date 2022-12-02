@@ -1,3 +1,6 @@
+#![feature(test)]
+extern crate test;
+
 pub const INPUT: &str = include_str!("input.txt");
 
 fn part1(input: &str) -> usize {
@@ -24,6 +27,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_part1() {
@@ -33,5 +37,15 @@ mod tests {
     #[test]
     fn test_part2() {
         assert_eq!(part2(INPUT), 208180)
+    }
+
+    #[bench]
+    fn bench_part1(b: &mut Bencher) {
+        b.iter(|| part1(INPUT))
+    }
+
+    #[bench]
+    fn bench_part2(b: &mut Bencher) {
+        b.iter(|| part2(INPUT))
     }
 }
