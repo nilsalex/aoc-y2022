@@ -3,6 +3,3 @@ members = [
     "day01",
     "day02",
 ]
-
-[toolchain]
-channel = "nightly"
