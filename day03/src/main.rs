@@ -2,7 +2,7 @@
 #![feature(byte_slice_trim_ascii)]
 extern crate test;
 
-use std::collections::HashSet;
+use itertools::Itertools;
 
 pub const INPUT: &[u8] = include_bytes!("input.txt");
 pub const NEWLINE: u8 = 10;
@@ -14,39 +14,47 @@ fn part1(input: &[u8]) -> usize {
         .map(|bytes: &[u8]| {
             let num_bytes = bytes.len();
 
-            let items1: HashSet<&u8> = HashSet::from_iter(bytes.iter().take(num_bytes / 2));
-            let items2: HashSet<&u8> = HashSet::from_iter(bytes.iter().skip(num_bytes / 2));
-
-            let common = **items1.intersection(&items2).next().unwrap();
+            for item1 in bytes.iter().take(num_bytes / 2) {
+                for item2 in bytes.iter().skip(num_bytes / 2) {
+                    if *item1 == *item2 {
+                        return *item1;
+                    }
+                }
+            }
+            panic!()
+        })
+        .map(|common|
 
             match common {
                 0..=96 => (common - 38) as usize,
                 _ => (common - 96) as usize,
             }
-        })
+        )
         .sum()
 }
 
 fn part2(input: &[u8]) -> usize {
-    let mut result = 0;
+    let lines = input.trim_ascii_end().split(|byte| *byte == NEWLINE);
 
-    let mut lines = input.trim_ascii_end().split(|byte| *byte == NEWLINE).peekable();
-
-    while lines.peek().is_some() {
-        let items1: HashSet<&u8> = HashSet::from_iter(lines.next().unwrap().iter());
-        let items2: HashSet<&u8> = HashSet::from_iter(lines.next().unwrap().iter());
-        let items3: HashSet<&u8> = HashSet::from_iter(lines.next().unwrap().iter());
-
-        let inter1: HashSet<&u8> = HashSet::from_iter(items1.intersection(&items2).cloned());
-        let common = inter1.intersection(&items3).next().unwrap();
-
-        result += match common {
-            0..=96 => (*common - 38) as usize,
-            _ => (*common - 96) as usize,
+    lines.tuples().map(|(line1, line2, line3)| {
+        for item1 in line1 {
+            for item2 in line2 {
+                for item3 in line3 {
+                    if *item1 == *item2 && *item2 == *item3 {
+                        return *item1;
+                    }
+                }
+            }
         }
-    };
-
-    result
+        panic!()
+    })
+        .map(|common|
+            match common {
+                0..=96 => (common - 38) as usize,
+                _ => (common - 96) as usize,
+            }
+        )
+        .sum()
 }
 
 fn main() {
