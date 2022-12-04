@@ -24,7 +24,6 @@ fn part1(input: &[u8]) -> usize {
             panic!()
         })
         .map(|common|
-
             match common {
                 0..=96 => (common - 38) as usize,
                 _ => (common - 96) as usize,
