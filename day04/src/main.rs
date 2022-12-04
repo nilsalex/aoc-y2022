@@ -1,43 +1,41 @@
 #![feature(test)]
+#![feature(byte_slice_trim_ascii)]
 extern crate test;
 
-pub const INPUT: &str = include_str!("input.txt");
+const INPUT: &[u8] = include_bytes!("input.txt");
 
-fn part1(input: &str) -> usize {
-    input.lines().filter(|line|
-        {
-            let mut pairs = line.split(',');
-            let mut pair1 = pairs.next().unwrap().split('-');
-            let mut pair2 = pairs.next().unwrap().split('-');
+const POWERS_OF_TEN: [u8; 3] = [1, 10, 100];
 
-            let a = pair1.next().unwrap().parse::<usize>().unwrap();
-            let b = pair1.next().unwrap().parse::<usize>().unwrap();
+fn u8_from_bytes(bytes: &[u8]) -> u8 {
+    bytes.iter().rev().enumerate().fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
+}
 
-            let c = pair2.next().unwrap().parse::<usize>().unwrap();
-            let d = pair2.next().unwrap().parse::<usize>().unwrap();
+fn numbers_from_line(bytes: &[u8]) -> (u8, u8, u8, u8) {
+    let mut numbers = bytes.split(|byte| *byte == b',' || *byte == b'-');
 
-            a <= c && b >= d || c <= a && d >= b
-        }
+    (
+        u8_from_bytes(numbers.next().unwrap()),
+        u8_from_bytes(numbers.next().unwrap()),
+        u8_from_bytes(numbers.next().unwrap()),
+        u8_from_bytes(numbers.next().unwrap()),
     )
+}
+
+fn part1(input: &[u8]) -> usize {
+    input
+        .trim_ascii_end()
+        .split(|byte| *byte == b'\n')
+        .map(numbers_from_line)
+        .filter(|(a, b, c, d)| a >= c && b <= d || c >= a && d <= b)
         .count()
 }
 
-fn part2(input: &str) -> usize {
-    input.lines().filter(|line|
-        {
-            let mut pairs = line.split(',');
-            let mut pair1 = pairs.next().unwrap().split('-');
-            let mut pair2 = pairs.next().unwrap().split('-');
-
-            let a = pair1.next().unwrap().parse::<usize>().unwrap();
-            let b = pair1.next().unwrap().parse::<usize>().unwrap();
-
-            let c = pair2.next().unwrap().parse::<usize>().unwrap();
-            let d = pair2.next().unwrap().parse::<usize>().unwrap();
-
-            !(a < c && b < c || c < a && d < a)
-        }
-    )
+fn part2(input: &[u8]) -> usize {
+    input
+        .trim_ascii_end()
+        .split(|byte| *byte == b'\n')
+        .map(numbers_from_line)
+        .filter(|(a, b, c, d)| !(a < c && b < c || c < a && d < a))
         .count()
 }
 
