@@ -26,21 +26,21 @@ fn part1(input: &[u8]) -> u32 {
 }
 
 fn part2(input: &[u8]) -> u32 {
-    let mut cals = Vec::new();
+    let mut top_three_plus_one = [0_u32; 4];
 
     input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
         .fold(0, |cur_cals, bytes|
             if bytes.is_empty() {
-                cals.push(cur_cals);
+                top_three_plus_one[0] = cur_cals;
+                top_three_plus_one.sort_unstable();
                 0
             } else {
                 cur_cals + u32_from_bytes(bytes)
             });
 
-    cals.select_nth_unstable_by(3, |a, b| b.cmp(a));
-    cals.iter().take(3).sum()
+    top_three_plus_one.iter().skip(1).sum()
 }
 
 fn main() {
