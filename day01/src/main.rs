@@ -13,34 +13,31 @@ fn u32_from_bytes(bytes: &[u8]) -> u32 {
 }
 
 fn part1(input: &[u8]) -> u32 {
-    let mut max_cals_sum: u32 = 0;
-    let mut cur_cals_sum: u32 = 0;
-
-    for bytes in input.trim_ascii_end().split(|byte| *byte == b'\n') {
-        if bytes.is_empty() {
-            max_cals_sum = std::cmp::max(max_cals_sum, cur_cals_sum);
-            cur_cals_sum = 0
-        } else {
-            cur_cals_sum += u32_from_bytes(bytes)
-        }
-    }
-
-    max_cals_sum
+    input
+        .trim_ascii_end()
+        .split(|byte| *byte == b'\n')
+        .fold((0, 0), |(max_cals, cur_cals), bytes|
+            if bytes.is_empty() {
+                (std::cmp::max(max_cals, cur_cals), 0)
+            } else {
+                (max_cals, cur_cals + u32_from_bytes(bytes))
+            })
+        .0
 }
 
 fn part2(input: &[u8]) -> u32 {
     let mut cals = Vec::new();
 
-    let mut cur_cals_sum: u32 = 0;
-
-    for bytes in input.trim_ascii_end().split(|byte| *byte == b'\n') {
-        if bytes.is_empty() {
-            cals.push(cur_cals_sum);
-            cur_cals_sum = 0
-        } else {
-            cur_cals_sum += u32_from_bytes(bytes)
-        }
-    }
+    input
+        .trim_ascii_end()
+        .split(|byte| *byte == b'\n')
+        .fold(0, |cur_cals, bytes|
+            if bytes.is_empty() {
+                cals.push(cur_cals);
+                0
+            } else {
+                cur_cals + u32_from_bytes(bytes)
+            });
 
     cals.select_nth_unstable_by(3, |a, b| b.cmp(a));
     cals.iter().take(3).sum()
