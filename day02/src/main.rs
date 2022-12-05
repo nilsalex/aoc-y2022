@@ -9,7 +9,7 @@ fn part1(input: &[u8]) -> u32 {
         .split(|byte| *byte == b'\n')
         .map(|bytes| {
             let a = bytes[0] - b'A';
-            let b = bytes[2] - b'Z';
+            let b = bytes[2] - b'X';
             (1 + b + ((4 + b - a) % 3) * 3) as u32 // add 4 instead of 1 because 4 + b - a is always > 0
         })
         .sum()
@@ -20,7 +20,7 @@ fn part2(input: &[u8]) -> u32 {
         .split_inclusive(|byte| *byte == b'\n')
         .map(|bytes| {
             let a = bytes[0] - b'A';
-            let b = bytes[2] - b'Z';
+            let b = bytes[2] - b'X';
             (1 + 3 * b + (a + b + 2) % 3) as u32
         })
         .sum()
