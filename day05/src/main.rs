@@ -9,18 +9,26 @@ fn bytes_to_u8(bytes: &[u8]) -> u8 {
     bytes.iter().rev().enumerate().fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
 }
 
+fn parse_stacks(input: &[u8]) -> Vec<Vec<u8>> {
+    let mut stacks: Vec<Vec<u8>> = vec![Vec::new(); 9];
+    for bytes in input.trim_ascii_end().split(|byte| *byte == b'\n') {
+        if bytes[1] == b'1' {
+            break;
+        }
+        for (index, byte) in bytes.trim_ascii_end().iter().skip(1).step_by(4).enumerate() {
+            if *byte != b' ' {
+                stacks[index].push(*byte)
+            }
+        }
+    };
+    for stack in stacks.iter_mut() {
+        stack.reverse()
+    }
+    stacks
+}
+
 fn part1(input: &[u8]) -> Vec<u8> {
-    let mut stacks: Vec<Vec<u8>> = vec![
-        vec![b'Q', b'M', b'G', b'C', b'L'],
-        vec![b'R', b'D', b'L', b'C', b'T', b'F', b'H', b'G'],
-        vec![b'V', b'J', b'F', b'N', b'M', b'T', b'W', b'R'],
-        vec![b'J', b'F', b'D', b'V', b'Q', b'P'],
-        vec![b'N', b'F', b'M', b'S', b'L', b'B', b'T'],
-        vec![b'R', b'N', b'V', b'H', b'C', b'D', b'P'],
-        vec![b'H', b'C', b'T'],
-        vec![b'G', b'S', b'J', b'V', b'Z', b'N', b'H', b'P'],
-        vec![b'Z', b'F', b'H', b'G'],
-    ];
+    let mut stacks: Vec<Vec<u8>> = parse_stacks(input);
 
     for bytes in input.trim_ascii_end().split(|byte| *byte == b'\n').skip(10) {
         let mut nums = bytes
@@ -43,19 +51,8 @@ fn part1(input: &[u8]) -> Vec<u8> {
 }
 
 fn part2(input: &[u8]) -> Vec<u8> {
-    let mut stacks: Vec<Vec<u8>> = vec![
-        vec![b'Q', b'M', b'G', b'C', b'L'],
-        vec![b'R', b'D', b'L', b'C', b'T', b'F', b'H', b'G'],
-        vec![b'V', b'J', b'F', b'N', b'M', b'T', b'W', b'R'],
-        vec![b'J', b'F', b'D', b'V', b'Q', b'P'],
-        vec![b'N', b'F', b'M', b'S', b'L', b'B', b'T'],
-        vec![b'R', b'N', b'V', b'H', b'C', b'D', b'P'],
-        vec![b'H', b'C', b'T'],
-        vec![b'G', b'S', b'J', b'V', b'Z', b'N', b'H', b'P'],
-        vec![b'Z', b'F', b'H', b'G'],
-    ];
-
-    let mut helper_stack: Vec<u8> = Vec::new();
+    let mut stacks: Vec<Vec<u8>> = parse_stacks(input);
+    let mut temp_stack: Vec<u8> = Vec::new();
 
     for bytes in input.trim_ascii_end().split(|byte| *byte == b'\n').skip(10) {
         let mut nums = bytes
@@ -70,11 +67,11 @@ fn part2(input: &[u8]) -> Vec<u8> {
 
         for _ in 0..count {
             let to_move = stacks[src - 1].pop().unwrap();
-            helper_stack.push(to_move);
+            temp_stack.push(to_move);
         }
 
         for _ in 0..count {
-            stacks[dst - 1].push(helper_stack.pop().unwrap())
+            stacks[dst - 1].push(temp_stack.pop().unwrap())
         }
     }
 
@@ -82,8 +79,8 @@ fn part2(input: &[u8]) -> Vec<u8> {
 }
 
 fn main() {
-    println!("{:?}", part1(INPUT));
-    println!("{:?}", part2(INPUT));
+    println!("{}", std::str::from_utf8(&part1(INPUT)).unwrap());
+    println!("{}", std::str::from_utf8(&part2(INPUT)).unwrap());
 }
 
 #[cfg(test)]
