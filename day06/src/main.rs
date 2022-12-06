@@ -24,19 +24,26 @@ fn part2(input: &[u8]) -> usize {
     }
 
     let mut result = 14;
+    let mut diff_count = counts.len();
 
     for window in input.windows(15) {
-        if counts.len() == 14 {
+        if diff_count == 14 {
             break;
         }
         match counts.get_mut(&window[0]) {
             None => panic!(),
             Some(c) => {
-                if *c > 1 { *c -= 1; } else { counts.remove(&window[0]); };
+                if *c > 1 { *c -= 1; } else {
+                    counts.remove(&window[0]);
+                    diff_count -= 1;
+                };
             }
         }
         match counts.get_mut(&window[14]) {
-            None => { counts.insert(window[14], 1); }
+            None => {
+                counts.insert(window[14], 1);
+                diff_count += 1;
+            }
             Some(c) => { *c += 1; }
         }
         result += 1
