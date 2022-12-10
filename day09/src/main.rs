@@ -6,50 +6,37 @@ use std::collections::HashSet;
 
 const INPUT: &[u8] = include_bytes!("input.txt");
 
+const POWERS_OF_TEN: [u8; 3] = [1, 10, 100];
+
+fn u8_from_bytes(bytes: &[u8]) -> u8 {
+    bytes.iter().rev().enumerate().fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
+}
+
 fn part1(input: &[u8]) -> usize {
-    let (mut hx, mut hy): (i32, i32) = (0, 0);
-    let (mut tx, mut ty): (i32, i32) = (0, 0);
-    let mut visited: HashSet<(i32, i32)> = HashSet::new();
-    visited.insert((tx, ty));
+    let mut head: (i16, i16) = (0, 0);
+    let mut tail: (i16, i16) = (0, 0);
+    let mut visited: HashSet<(i16, i16)> = HashSet::new();
+    visited.insert(tail);
 
     for bytes in input.trim_ascii_end().split(|byte| *byte == b'\n') {
-        let (dx, dy): (i32, i32) = match bytes[0] {
+        let (dx, dy): (i16, i16) = match bytes[0] {
             b'U' => (-1, 0),
             b'D' => (1, 0),
             b'L' => (0, -1),
             b'R' => (0, 1),
             _ => panic!(),
         };
-        let steps: u8 = std::str::from_utf8(&bytes[2..]).unwrap().parse().unwrap();
+        let steps = u8_from_bytes(&bytes[2..]);
 
         for _ in 0..steps {
-            hx += dx;
-            hy += dy;
-            match (hx-tx, hy-ty) {
-                (-2, 0) => tx -= 1,
-                (2, 0) => tx += 1,
-                (0, -2) => ty -= 1,
-                (0, 2) => ty += 1,
-                (-2, 1) => {tx -= 1; ty += 1},
-                (-2, -1) => {tx -= 1; ty -= 1},
-                (2, 1) => {tx += 1; ty += 1},
-                (2, -1) => {tx += 1; ty -= 1},
-                (1, -2) => {tx += 1; ty -= 1},
-                (-1, -2) => {tx -= 1; ty -= 1},
-                (1, 2) => {tx += 1; ty += 1},
-                (-1, 2) => {tx -= 1; ty += 1},
-                (0, 0) => {},
-                (0, 1) => {},
-                (0, -1) => {},
-                (1, 0) => {},
-                (-1, 0) => {},
-                (1, 1) => {},
-                (1, -1) => {},
-                (-1, 1) => {},
-                (-1, -1) => {},
-                _ => panic!(),
+            head.0 += dx;
+            head.1 += dy;
+            let (diff_x, diff_y) = (head.0 - tail.0, head.1 - tail.1);
+            if diff_x.abs() > 1 || diff_y.abs() > 1 {
+                tail.0 += diff_x.signum();
+                tail.1 += diff_y.signum();
+                visited.insert(tail);
             }
-            visited.insert((tx, ty));
         }
     }
 
@@ -57,9 +44,9 @@ fn part1(input: &[u8]) -> usize {
 }
 
 fn part2(input: &[u8]) -> usize {
-    let mut rope: [(i32, i32); 10] = [(0,0); 10];
-    let mut visited: HashSet<(i32, i32)> = HashSet::new();
-    visited.insert(rope[9]);
+    let mut rope: [i32; 20] = [0; 20];
+    let mut visited: HashSet<u64> = HashSet::new();
+    visited.insert((((rope[18] as u32) as u64) << 32) | ((rope[19] as u32) as u64));
 
     for bytes in input.trim_ascii_end().split(|byte| *byte == b'\n') {
         let (dx, dy): (i32, i32) = match bytes[0] {
@@ -69,69 +56,19 @@ fn part2(input: &[u8]) -> usize {
             b'R' => (0, 1),
             _ => panic!(),
         };
-        let steps: u8 = std::str::from_utf8(&bytes[2..]).unwrap().parse().unwrap();
+        let steps = u8_from_bytes(&bytes[2..]);
 
         for _ in 0..steps {
-            rope[0].0 += dx;
-            rope[0].1 += dy;
-            for segment in 1..10 {
-                let (hx, hy) = rope[segment-1];
-                let (mut tx, mut ty) = rope[segment];
-                match (hx - tx, hy - ty) {
-                    (-2, 0) => tx -= 1,
-                    (2, 0) => tx += 1,
-                    (0, -2) => ty -= 1,
-                    (0, 2) => ty += 1,
-                    (-2, 1) => {
-                        tx -= 1;
-                        ty += 1
-                    },
-                    (-2, -1) => {
-                        tx -= 1;
-                        ty -= 1
-                    },
-                    (2, 1) => {
-                        tx += 1;
-                        ty += 1
-                    },
-                    (2, -1) => {
-                        tx += 1;
-                        ty -= 1
-                    },
-                    (1, -2) => {
-                        tx += 1;
-                        ty -= 1
-                    },
-                    (-1, -2) => {
-                        tx -= 1;
-                        ty -= 1
-                    },
-                    (1, 2) => {
-                        tx += 1;
-                        ty += 1
-                    },
-                    (-1, 2) => {
-                        tx -= 1;
-                        ty += 1
-                    },
-                    (0, 0) => {},
-                    (0, 1) => {},
-                    (0, -1) => {},
-                    (1, 0) => {},
-                    (-1, 0) => {},
-                    (1, 1) => {},
-                    (1, -1) => {},
-                    (-1, 1) => {},
-                    (-1, -1) => {},
-                    (-2, -2) => {tx -= 1; ty -= 1},
-                    (-2, 2) => {tx -= 1; ty += 1},
-                    (2, -2) => {tx += 1; ty -= 1},
-                    (2, 2) => {tx += 1; ty += 1},
-                    _ => panic!(),
+            rope[0] += dx;
+            rope[1] += dy;
+            for segment in 0..9 {
+                let (diff_x, diff_y): (i32, i32) = (rope[2 * segment] - rope[2 * segment + 2], rope[2 * segment + 1] - rope[2 * segment + 3]);
+                if diff_x.abs() > 1 || diff_y.abs() > 1 {
+                    rope[2 * segment + 2] += diff_x.signum();
+                    rope[2 * segment + 3] += diff_y.signum();
                 }
-                rope[segment] = (tx, ty)
             }
-            visited.insert(rope[9]);
+            visited.insert((((rope[18] as u32) as u64) << 32) | ((rope[19] as u32) as u64));
         }
     }
 
