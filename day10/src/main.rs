@@ -4,6 +4,17 @@ extern crate test;
 
 const INPUT: &[u8] = include_bytes!("input.txt");
 
+const POWERS_OF_TEN: [i8; 3] = [1, 10, 100];
+
+fn i8_from_bytes(bytes: &[u8]) -> i8 {
+    if bytes[0] == b'-' {
+        bytes.iter().skip(1).rev().enumerate().fold(0, |acc, (ix, x)| acc + (48 - *x as i8) * POWERS_OF_TEN[ix])
+    } else {
+        bytes.iter().rev().enumerate().fold(0, |acc, (ix, x)| acc + (*x as i8 - 48) * POWERS_OF_TEN[ix])
+    }
+}
+
+
 fn part1(input: &[u8]) -> isize {
     const CYCLES: [u32; 6] = [20, 60, 100, 140, 180, 220];
     let mut register: isize = 1;
@@ -17,16 +28,12 @@ fn part1(input: &[u8]) -> isize {
         if instruction[0] == b'n' {
             cycle += 1;
         } else {
-            let v = std::str::from_utf8(&instruction[5..])
-                .unwrap()
-                .parse::<isize>()
-                .unwrap();
             cycle += 1;
             if CYCLES.contains(&cycle) {
                 result += (cycle as isize) * register;
             }
             cycle += 1;
-            register += v;
+            register += i8_from_bytes(&instruction[5..]) as isize;
         }
     }
 
@@ -47,10 +54,6 @@ fn part2(input: &[u8]) -> String {
             crt_col = cycle - crt_row * 40;
             result[crt_row][crt_col] = ((crt_col as isize) - register).abs() < 2;
         } else {
-            let v = std::str::from_utf8(&instruction[5..])
-                .unwrap()
-                .parse::<isize>()
-                .unwrap();
             cycle = (cycle + 1) % 240;
             crt_row = cycle / 40;
             crt_col = cycle - crt_row * 40;
@@ -58,7 +61,7 @@ fn part2(input: &[u8]) -> String {
             cycle = (cycle + 1) % 240;
             crt_row = cycle / 40;
             crt_col = cycle - crt_row * 40;
-            register += v;
+            register += i8_from_bytes(&instruction[5..]) as isize;
             result[crt_row][crt_col] = ((crt_col as isize) - register).abs() < 2;
         }
     }
