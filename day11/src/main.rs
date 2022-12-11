@@ -1,124 +1,95 @@
 #![feature(test)]
 extern crate test;
 
-use std::cell::RefCell;
-use std::collections::VecDeque;
+const MAX_ITEMS_PER_MONKEY: usize = 32;
+const NUM_MONKEYS: usize = 8;
+const ITEMS_OFFSET: usize = 7;
 
-#[derive(Debug)]
-enum Operation {
-    Add(usize),
-    Multiply(usize),
-    Square,
+const MONKEY_SIZE: usize = MAX_ITEMS_PER_MONKEY + ITEMS_OFFSET;
+const MONKEYS_SIZE: usize = NUM_MONKEYS * MONKEY_SIZE;
+
+const MONKEYS: [usize; MONKEYS_SIZE] = [
+    6, 3, 0, 13, 6, 2, 0, 89, 73, 66, 57, 64, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    7, 0, 1, 3, 7, 4, 0, 83, 78, 81, 55, 81, 59, 69, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    4, 13, 0, 7, 1, 4, 0, 76, 91, 58, 85, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    5, 0, 0, 2, 6, 0, 0, 71, 72, 74, 76, 68, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    3, 0, 7, 19, 5, 7, 0, 98, 85, 84, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 8, 5, 3, 0, 0, 78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    8, 0, 4, 11, 1, 2, 0, 86, 70, 60, 88, 88, 78, 74, 83, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    2, 0, 5, 17, 3, 5, 0, 81, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
+const MODULUS: usize = 2 * 3 * 5 * 7 * 11 * 13 * 17 * 19;
+
+const fn num_items_index(monkey: usize) -> usize {
+    monkey * MONKEY_SIZE
 }
 
-#[derive(Debug)]
-struct Monkey {
-    items: VecDeque<usize>,
-    operation: Operation,
-    divisor: usize,
-    next_if_divisible: usize,
-    next_if_not_divisible: usize,
-    num_items_inspected: usize,
+const fn item_index(monkey: usize, item: usize) -> usize {
+    monkey * MONKEY_SIZE + ITEMS_OFFSET + item
+}
+
+const fn factor_index(monkey: usize) -> usize {
+    monkey * MONKEY_SIZE + 1
+}
+
+const fn summand_index(monkey: usize) -> usize {
+    monkey * MONKEY_SIZE + 2
+}
+
+const fn divisor_index(monkey: usize) -> usize {
+    monkey * MONKEY_SIZE + 3
+}
+
+const fn next_if_true_index(monkey: usize) -> usize {
+    monkey * MONKEY_SIZE + 4
+}
+
+const fn next_if_false_index(monkey: usize) -> usize {
+    monkey * MONKEY_SIZE + 5
+}
+
+const fn num_inspected_index(monkey: usize) -> usize {
+    monkey * MONKEY_SIZE + 6
 }
 
 fn solution(rounds: usize, calm_down_factor: usize) -> usize {
-    let monkeys = vec![
-        RefCell::new(Monkey {
-            items: VecDeque::from([89, 73, 66, 57, 64, 80]),
-            operation: Operation::Multiply(3),
-            divisor: 13,
-            next_if_divisible: 6,
-            next_if_not_divisible: 2,
-            num_items_inspected: 0,
-        }),
-        RefCell::new(Monkey {
-            items: VecDeque::from([83, 78, 81, 55, 81, 59, 69]),
-            operation: Operation::Add(1),
-            divisor: 3,
-            next_if_divisible: 7,
-            next_if_not_divisible: 4,
-            num_items_inspected: 0,
-        }),
-        RefCell::new(Monkey {
-            items: VecDeque::from([76, 91, 58, 85]),
-            operation: Operation::Multiply(13),
-            divisor: 7,
-            next_if_divisible: 1,
-            next_if_not_divisible: 4,
-            num_items_inspected: 0,
-        }),
-        RefCell::new(Monkey {
-            items: VecDeque::from([71, 72, 74, 76, 68]),
-            operation: Operation::Square,
-            divisor: 2,
-            next_if_divisible: 6,
-            next_if_not_divisible: 0,
-            num_items_inspected: 0,
-        }),
-        RefCell::new(Monkey {
-            items: VecDeque::from([98, 85, 84]),
-            operation: Operation::Add(7),
-            divisor: 19,
-            next_if_divisible: 5,
-            next_if_not_divisible: 7,
-            num_items_inspected: 0,
-        }),
-        RefCell::new(Monkey {
-            items: VecDeque::from([78]),
-            operation: Operation::Add(8),
-            divisor: 5,
-            next_if_divisible: 3,
-            next_if_not_divisible: 0,
-            num_items_inspected: 0,
-        }),
-        RefCell::new(Monkey {
-            items: VecDeque::from([86, 70, 60, 88, 88, 78, 74, 83]),
-            operation: Operation::Add(4),
-            divisor: 11,
-            next_if_divisible: 1,
-            next_if_not_divisible: 2,
-            num_items_inspected: 0,
-        }),
-        RefCell::new(Monkey {
-            items: VecDeque::from([81, 58]),
-            operation: Operation::Add(5),
-            divisor: 17,
-            next_if_divisible: 3,
-            next_if_not_divisible: 5,
-            num_items_inspected: 0,
-        }),
-    ];
-    let modulus: usize = monkeys
-        .iter()
-        .map(|monkey| monkey.borrow().divisor)
-        .product();
+    let mut monkeys = MONKEYS;
 
     for _ in 0..rounds {
-        for monkey in &monkeys {
-            let mut monkey = monkey.borrow_mut();
-            while let Some(item) = monkey.items.pop_front() {
-                monkey.num_items_inspected += 1;
-                let new_item = (match monkey.operation {
-                    Operation::Add(x) => item + x,
-                    Operation::Multiply(x) => item * x,
-                    Operation::Square => item * item,
-                } / calm_down_factor)
-                    % modulus;
-                let next_monkey = if new_item % monkey.divisor == 0 {
-                    monkey.next_if_divisible
+        for monkey in 0..NUM_MONKEYS {
+            for item in 0..monkeys[num_items_index(monkey)] {
+                monkeys[num_inspected_index(monkey)] += 1;
+                let mut worry_level = monkeys[item_index(monkey, item)];
+                let factor = monkeys[factor_index(monkey)];
+                let summand = monkeys[summand_index(monkey)];
+                let divisor = monkeys[divisor_index(monkey)];
+                if summand != 0 {
+                    worry_level += summand;
+                } else if factor != 0 {
+                    worry_level *= factor;
                 } else {
-                    monkey.next_if_not_divisible
+                    worry_level = worry_level * worry_level;
+                }
+                worry_level %= MODULUS;
+                worry_level /= calm_down_factor;
+                let next_monkey = if worry_level % divisor == 0 {
+                    monkeys[next_if_true_index(monkey)]
+                } else {
+                    monkeys[next_if_false_index(monkey)]
                 };
-                monkeys[next_monkey].borrow_mut().items.push_back(new_item)
+                let next_monkey_num_items = monkeys[num_items_index(next_monkey)];
+                monkeys[item_index(next_monkey, next_monkey_num_items)] = worry_level;
+                monkeys[num_items_index(next_monkey)] += 1;
             }
+            monkeys[num_items_index(monkey)] = 0;
         }
     }
 
     let mut top_two_plus_one = [0, 0, 0];
 
-    for monkey in monkeys {
-        let monkey = monkey.borrow();
-        top_two_plus_one[0] = monkey.num_items_inspected;
+    for monkey in 0..NUM_MONKEYS {
+        top_two_plus_one[0] = monkeys[num_inspected_index(monkey)];
         top_two_plus_one.sort_unstable()
     }
 
