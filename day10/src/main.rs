@@ -16,28 +16,26 @@ fn i8_from_bytes(bytes: &[u8]) -> i8 {
 
 
 fn part1(input: &[u8]) -> isize {
-    const CYCLES: [u32; 6] = [20, 60, 100, 140, 180, 220];
-    let mut register: isize = 1;
-    let mut cycle: u32 = 1;
-    let mut result: isize = 0;
-
-    for instruction in input.trim_ascii_end().split(|byte| *byte == b'\n') {
-        if CYCLES.contains(&cycle) {
-            result += (cycle as isize) * register;
-        }
-        if instruction[0] == b'n' {
-            cycle += 1;
-        } else {
-            cycle += 1;
-            if CYCLES.contains(&cycle) {
-                result += (cycle as isize) * register;
+    input
+        .trim_ascii_end()
+        .split(|byte| *byte == b'\n')
+        .fold((1_isize, 1_isize, 0_isize), |(cycle, register, signal), instruction| {
+            let (mut new_cycle, mut new_signal) = (cycle, signal);
+            if (new_cycle + 20) % 40 == 0 {
+                new_signal += (new_cycle as isize) * register;
             }
-            cycle += 1;
-            register += i8_from_bytes(&instruction[5..]) as isize;
-        }
-    }
-
-    result
+            new_cycle += 1;
+            if instruction[0] == b'n' {
+                (new_cycle, register, new_signal)
+            } else {
+                if (new_cycle + 20) % 40 == 0 {
+                    new_signal += (new_cycle as isize) * register;
+                }
+                (new_cycle + 1, register + i8_from_bytes(&instruction[5..]) as isize, new_signal)
+            }
+        },
+        )
+        .2
 }
 
 fn part2(input: &[u8]) -> String {
