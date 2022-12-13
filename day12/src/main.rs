@@ -7,6 +7,12 @@ use std::collections::{BinaryHeap, HashMap};
 
 const INPUT: &[u8] = include_bytes!("input.txt");
 
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+enum Direction {
+    Up,
+    Down,
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 struct State {
     cost: usize,
@@ -15,7 +21,9 @@ struct State {
 
 impl Ord for State {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.cost.cmp(&self.cost)
+        other
+            .cost
+            .cmp(&self.cost)
             .then_with(|| self.position.cmp(&other.position))
     }
 }
@@ -26,7 +34,7 @@ impl PartialOrd for State {
     }
 }
 
-fn part1(input: &[u8]) -> usize {
+fn solve(input: &[u8], start: u8, end: u8, direction: Direction) -> usize {
     let grid: Vec<&[u8]> = input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
@@ -37,7 +45,7 @@ fn part1(input: &[u8]) -> usize {
 
     'outer: for (y, row) in grid.iter().enumerate() {
         for (x, cell) in row.iter().enumerate() {
-            if *cell == b'S' {
+            if *cell == start {
                 (x0, y0) = (x, y);
                 break 'outer;
             }
@@ -47,13 +55,24 @@ fn part1(input: &[u8]) -> usize {
     let mut dist: HashMap<(usize, usize), usize> = HashMap::new();
     let mut heap: BinaryHeap<State> = BinaryHeap::new();
     dist.insert((x0, y0), 0);
-    heap.push(State { cost: 0, position: (x0, y0) });
+    heap.push(State {
+        cost: 0,
+        position: (x0, y0),
+    });
 
     while let Some(State { cost, position }) = heap.pop() {
-        if grid[position.1][position.0] == b'E' { return cost; }
-        if &cost > dist.get(&position).unwrap_or(&usize::MAX) { continue; }
-        for (next_x, next_y) in next_cells(position.0, position.1, x_size, y_size, &grid) {
-            let next = State { cost: cost + 1, position: (next_x, next_y) };
+        if grid[position.1][position.0] == end {
+            return cost;
+        }
+        if &cost > dist.get(&position).unwrap_or(&usize::MAX) {
+            continue;
+        }
+        for (next_x, next_y) in next_cells(position.0, position.1, x_size, y_size, direction, &grid)
+        {
+            let next = State {
+                cost: cost + 1,
+                position: (next_x, next_y),
+            };
             if next.cost < *dist.get(&next.position).unwrap_or(&usize::MAX) {
                 heap.push(next);
                 dist.insert(next.position, next.cost);
@@ -64,12 +83,21 @@ fn part1(input: &[u8]) -> usize {
     panic!()
 }
 
-fn next_cells(x: usize, y: usize, x_size: usize, y_size: usize, grid: &[&[u8]]) -> Vec<(usize, usize)> {
+fn next_cells(
+    x: usize,
+    y: usize,
+    x_size: usize,
+    y_size: usize,
+    direction: Direction,
+    grid: &[&[u8]],
+) -> Vec<(usize, usize)> {
     let (x_, y_, x_size_, y_size_) = (x as isize, y as isize, x_size as isize, y_size as isize);
-    let mut current_elevation = grid[y][x];
-    if current_elevation == b'S' {
-        current_elevation = b'a'
-    }
+
+    let current_elevation = match grid[y][x] {
+        b'S' => b'a',
+        b'E' => b'z',
+        h => h,
+    };
 
     [(-1, 0), (0, -1), (1, 0), (0, 1)]
         .iter()
@@ -77,52 +105,25 @@ fn next_cells(x: usize, y: usize, x_size: usize, y_size: usize, grid: &[&[u8]]) 
         .filter(|(x_new, y_new)| *x_new >= 0 && *y_new >= 0 && *x_new < x_size_ && *y_new < y_size_)
         .map(|(x_new, y_new)| (x_new as usize, y_new as usize))
         .filter(|(x_new, y_new)| {
-            let mut new_elevation = grid[*y_new][*x_new];
-            if new_elevation == b'E' {
-                new_elevation = b'z'
+            let new_elevation = match grid[*y_new][*x_new] {
+                b'S' => b'a',
+                b'E' => b'z',
+                h => h,
+            };
+            match direction {
+                Direction::Up => current_elevation + 1 >= new_elevation,
+                Direction::Down => new_elevation + 1 >= current_elevation,
             }
-            current_elevation + 1 >= new_elevation
         })
         .collect::<Vec<(usize, usize)>>()
 }
 
+fn part1(input: &[u8]) -> usize {
+    solve(input, b'S', b'E', Direction::Up)
+}
+
 fn part2(input: &[u8]) -> usize {
-    let grid: Vec<&[u8]> = input
-        .trim_ascii_end()
-        .split(|byte| *byte == b'\n')
-        .collect();
-
-    let (x_size, y_size) = (grid[0].len(), grid.len());
-
-    let mut result = usize::MAX;
-
-    for (y, row) in grid.iter().enumerate() {
-        'inner: for (x, cell) in row.iter().enumerate() {
-            if *cell == b'S' || *cell == b'a' {
-                let mut dist: HashMap<(usize, usize), usize> = HashMap::new();
-                let mut heap: BinaryHeap<State> = BinaryHeap::new();
-                dist.insert((x, y), 0);
-                heap.push(State { cost: 0, position: (x, y) });
-
-                while let Some(State { cost, position }) = heap.pop() {
-                    if grid[position.1][position.0] == b'E' {
-                        result = std::cmp::min(result, cost);
-                        continue 'inner;
-                    }
-                    if &cost > dist.get(&position).unwrap_or(&usize::MAX) { continue; }
-                    for (next_x, next_y) in next_cells(position.0, position.1, x_size, y_size, &grid) {
-                        let next = State { cost: cost + 1, position: (next_x, next_y) };
-                        if next.cost < *dist.get(&next.position).unwrap_or(&usize::MAX) {
-                            heap.push(next);
-                            dist.insert(next.position, next.cost);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    result
+    solve(input, b'E', b'a', Direction::Down)
 }
 
 fn main() {
