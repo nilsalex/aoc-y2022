@@ -3,7 +3,7 @@
 extern crate test;
 
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::{BinaryHeap, HashMap, VecDeque};
 
 const INPUT: &[u8] = include_bytes!("input.txt");
 
@@ -52,19 +52,16 @@ fn solve(input: &[u8], start: u8, end: u8, direction: Direction) -> usize {
         }
     }
 
-    let mut dist: HashMap<(usize, usize), usize> = HashMap::new();
-    let mut heap: BinaryHeap<State> = BinaryHeap::new();
-    dist.insert((x0, y0), 0);
-    heap.push(State {
-        cost: 0,
-        position: (x0, y0),
-    });
+    let mut visited: Vec<bool> = vec![false; x_size * y_size];
+    let mut queue: VecDeque<State> = VecDeque::new();
+    visited[y0 * x_size + x0];
+    queue.push_back(State { cost: 0, position: (x0, y0) });
 
-    while let Some(State { cost, position }) = heap.pop() {
+    while let Some(State { cost, position }) = queue.pop_front() {
         if grid[position.1][position.0] == end {
             return cost;
         }
-        if &cost > dist.get(&position).unwrap_or(&usize::MAX) {
+        if visited[position.1 * x_size + position.0] {
             continue;
         }
         for (next_x, next_y) in next_cells(position.0, position.1, x_size, y_size, direction, &grid)
@@ -73,10 +70,9 @@ fn solve(input: &[u8], start: u8, end: u8, direction: Direction) -> usize {
                 cost: cost + 1,
                 position: (next_x, next_y),
             };
-            if next.cost < *dist.get(&next.position).unwrap_or(&usize::MAX) {
-                heap.push(next);
-                dist.insert(next.position, next.cost);
-            }
+            queue.push_back(next);
+            visited[]
+            dist.insert(next.position, next.cost);
         }
     }
 
