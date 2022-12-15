@@ -2,25 +2,53 @@
 extern crate test;
 
 use std::cmp::max;
-use std::collections::HashSet;
 
 const INPUT: &str = include_str!("input.txt");
 
-fn parse_input(input: &str) -> (HashSet<(u32, u32)>, u32) {
-    let mut occupied: HashSet<(u32, u32)> = HashSet::new();
-    let mut max_y: u32 = 0;
+#[derive(Copy, Clone, Eq, PartialEq)]
+enum Cell { Air, Rock, Sand }
 
-    for line in input.lines() {
-        let nodes = line.split(" -> ").map(|coords| {
-            let mut split = coords.split(',');
-            let x = split.next().unwrap().parse::<i32>().unwrap();
-            let y = split.next().unwrap().parse::<i32>().unwrap();
-            (x, y)
-        }).collect::<Vec<(i32, i32)>>();
-        for window in nodes.windows(2) {
-            let start = window[0];
-            let end = window[1];
-            let (dx, dy) = (end.0 - start.0, end.1 - start.1);
+struct Grid {
+    x_size: usize,
+    y_size: usize,
+    cells: Vec<Cell>,
+}
+
+impl Grid {
+    fn get(&self, x: usize, y: usize) -> Cell {
+        if x >= self.x_size {
+            Cell::Air
+        } else if y >= self.y_size {
+            Cell::Air
+        } else {
+            self.cells[y * self.x_size + x]
+        }
+    }
+
+    fn set(&mut self, x: usize, y: usize, cell: Cell) {
+        self.cells[y*self.x_size + x] = cell
+    }
+
+    fn from_lines(lines: &Vec<Line>, add_bottom: bool) -> Self {
+        let (x_max, y_max) = lines
+            .iter()
+            .fold((0, 0), |(x_max, y_max), line|
+                (
+                    max(max(x_max, line.start.0), line.end.0),
+                    max(max(y_max, line.start.1), line.end.1),
+                ),
+            );
+        let x_size = 2 * (x_max + 1) as usize;
+        let y_size = if add_bottom {
+            (y_max + 1) as usize
+        } else {
+            (y_max + 3) as usize
+        };
+
+        let mut cells = vec![Cell::Air; x_size * y_size];
+
+        for line in lines {
+            let (dx, dy) = (line.end.0 - line.start.0, line.end.1 - line.start.1);
 
             let steps = max(dx.abs(), dy.abs());
             let (dx_, dy_) = if dx == 0 && dy == 0 {
@@ -30,23 +58,52 @@ fn parse_input(input: &str) -> (HashSet<(u32, u32)>, u32) {
             };
 
             for i in 0..=steps {
-                let (x, y) = (start.0 + dx_ * i, start.1 + dy_ * i);
-                occupied.insert((x as u32, y as u32));
+                let (x, y) = ((line.start.0 + dx_ * i) as usize, (line.start.1 + dy_ * i) as usize);
+                cells[y * x_size + x] = Cell::Rock;
             }
-            max_y = max(max_y, start.1 as u32);
-            max_y = max(max_y, end.1 as u32);
+        }
+
+        if add_bottom {
+            for x in 0..x_size {
+                cells[(y_size - 1) * x_size + x] = Cell::Rock
+            }
+        }
+
+        Grid {x_size, y_size, cells}
+    }
+}
+
+struct Line {
+    start: (i16, i16),
+    end: (i16, i16),
+}
+
+fn parse_node(input: &str) -> (i16, i16) {
+    let mut numbers = input.split(',');
+    (numbers.next().unwrap().parse().unwrap(), numbers.next().unwrap().parse().unwrap())
+}
+
+fn parse_lines(input: &str) -> Vec<Line> {
+    let mut lines = Vec::new();
+
+    for line in input.lines() {
+        let mut nodes_it = line.split(" -> ");
+        let mut current_node = nodes_it.next().unwrap();
+        while let Some(next_node) = nodes_it.next() {
+            lines.push(Line { start: parse_node(current_node), end: parse_node(next_node) });
+            current_node = next_node
         }
     }
 
-    (occupied, max_y)
+    lines
 }
 
-fn next(sx: u32, sy: u32, occupied: &HashSet<(u32, u32)>) -> Option<(u32, u32)> {
-    if !occupied.contains(&(sx, sy + 1)) {
+fn next(sx: usize, sy: usize, grid: &Grid) -> Option<(usize, usize)> {
+    if grid.get(sx, sy+1) == Cell::Air {
         Some((sx, sy + 1))
-    } else if !occupied.contains(&(sx - 1, sy + 1)) {
+    } else if grid.get(sx-1, sy+1) == Cell::Air {
         Some((sx - 1, sy + 1))
-    } else if !occupied.contains(&(sx + 1, sy + 1)) {
+    } else if grid.get(sx+1, sy+1) == Cell::Air {
         Some((sx + 1, sy + 1))
     } else {
         None
@@ -54,21 +111,22 @@ fn next(sx: u32, sy: u32, occupied: &HashSet<(u32, u32)>) -> Option<(u32, u32)> 
 }
 
 fn part1(input: &str) -> usize {
-    let (mut occupied, max_y) = parse_input(input);
+    let lines = parse_lines(input);
+    let mut grid = Grid::from_lines(&lines, false);
 
     let mut result = 0;
 
     'outer: loop {
         let (mut sx, mut sy) = (500, 0);
 
-        while let Some((sx_, sy_)) = next(sx, sy, &occupied) {
-            if sy > max_y {
+        while let Some((sx_, sy_)) = next(sx, sy, &grid) {
+            if sy >= grid.y_size {
                 break 'outer;
             }
             (sx, sy) = (sx_, sy_);
         }
 
-        occupied.insert((sx, sy));
+        grid.set(sx, sy, Cell::Sand);
         result += 1;
     }
 
@@ -76,21 +134,19 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    let (mut occupied, max_y) = parse_input(input);
+    let lines = parse_lines(input);
+    let mut grid = Grid::from_lines(&lines, false);
 
     let mut result = 0;
 
     loop {
         let (mut sx, mut sy) = (500, 0);
 
-        while let Some((sx_, sy_)) = next(sx, sy, &occupied) {
-            if sy_ == max_y + 2 {
-                break;
-            }
+        while let Some((sx_, sy_)) = next(sx, sy, &grid) {
             (sx, sy) = (sx_, sy_);
         }
 
-        occupied.insert((sx, sy));
+        grid.set(sx, sy, Cell::Sand);
         result += 1;
 
         if sy == 0 && sx == 500 {
@@ -121,6 +177,23 @@ mod tests {
     #[test]
     fn test_part2() {
         assert_eq!(part2(INPUT), 24943)
+    }
+
+    #[bench]
+    fn bench_parser(b: &mut Bencher) {
+        b.iter(|| parse_lines(INPUT))
+    }
+
+    #[bench]
+    fn bench_grid(b: &mut Bencher) {
+        let lines = parse_lines(INPUT);
+        b.iter(|| Grid::from_lines(&lines, false))
+    }
+
+    #[bench]
+    fn bench_grid_with_bottom(b: &mut Bencher) {
+        let lines = parse_lines(INPUT);
+        b.iter(|| Grid::from_lines(&lines, true))
     }
 
     #[bench]
