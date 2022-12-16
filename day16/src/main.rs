@@ -194,61 +194,72 @@ fn next_states(state: &State, graph: &FullyConnectedGraph) -> Vec<State> {
 }
 
 fn next_extended_states(state: &ExtendedState, graph: &FullyConnectedGraph) -> Vec<ExtendedState> {
+    let mut next_states = Vec::new();
+
+    if state.time_remaining_1 >= state.time_remaining_2 {
+        next_states.extend((0..graph.num_vertices)
+            .filter(|v| !state.opened[*v])
+            .filter_map(|v| {
+                let (weight, rate) = (graph.get_weight(state.position_1, v), graph.get_value(v));
+
+                if state.time_remaining_1 > weight + 1 {
+                    let mut opened = state.opened.clone();
+                    opened[v] = true;
+
+                    let time_remaining = state.time_remaining_1 - weight - 1;
+                    let cumulative_flow = state.cumulative_flow + time_remaining as usize * rate as usize;
+
+                    Some(ExtendedState {
+                        position_1: v,
+                        position_2: state.position_2,
+                        opened,
+                        cumulative_flow,
+                        time_remaining_1: time_remaining,
+                        time_remaining_2: state.time_remaining_2,
+                        depth: state.depth + 1,
+                    })
+                } else {
+                    None
+                }
+            }));
+    }
+
+    if next_states.is_empty() {
+        next_states.extend((0..graph.num_vertices)
+            .filter(|v| !state.opened[*v])
+            .filter_map(|v| {
+                let (weight, rate) = (graph.get_weight(state.position_2, v), graph.get_value(v));
+
+                if state.time_remaining_2 > weight + 1 {
+                    let mut opened = state.opened.clone();
+                    opened[v] = true;
+
+                    let time_remaining = state.time_remaining_2 - weight - 1;
+                    let cumulative_flow = state.cumulative_flow + time_remaining as usize * rate as usize;
+
+                    Some(ExtendedState {
+                        position_1: state.position_1,
+                        position_2: v,
+                        opened,
+                        cumulative_flow,
+                        time_remaining_1: state.time_remaining_1,
+                        time_remaining_2: time_remaining,
+                        depth: state.depth + 1,
+                    })
+                } else {
+                    None
+                }
+            }));
+    }
+
     if state.depth < 3 {
         for _ in 0..state.depth {
-            print!(" ");
+            print!(" ")
         }
-        println!("depth {}", state.depth);
+        println!("depth {}: {} branches", state.depth, next_states.len())
     }
-    let mut next_1: Vec<ExtendedState> = (0..graph.num_vertices)
-        .filter(|position_1| !state.opened[*position_1])
-        .filter_map(|position_1| {
-            let (weight, rate) = (graph.get_weight(state.position_1, position_1), graph.get_value(position_1));
 
-            if state.time_remaining_1 > weight + 1 {
-                let mut opened = state.opened.clone();
-                opened[position_1] = true;
-
-                let time_remaining_1 = state.time_remaining_1 - weight - 1;
-                let cumulative_flow = state.cumulative_flow + time_remaining_1 as usize * rate as usize;
-                let position_2 = state.position_2;
-                let time_remaining_2 = state.time_remaining_2;
-                let depth = state.depth + 1;
-
-                Some(ExtendedState { position_1, position_2, opened, cumulative_flow, time_remaining_1, time_remaining_2, depth })
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    let mut next_2: Vec<ExtendedState> = (0..graph.num_vertices)
-        .filter(|position_2| !state.opened[*position_2])
-        .filter_map(|position_2| {
-            let (weight, rate) = (graph.get_weight(state.position_2, position_2), graph.get_value(position_2));
-
-            if state.time_remaining_2 > weight + 1 {
-                let mut opened = state.opened.clone();
-                opened[position_2] = true;
-
-                let time_remaining_2 = state.time_remaining_2 - weight - 1;
-                let cumulative_flow = state.cumulative_flow + time_remaining_2 as usize * rate as usize;
-                let position_1 = state.position_1;
-                let time_remaining_1 = state.time_remaining_1;
-                let depth = state.depth + 1;
-
-                Some(ExtendedState { position_1, position_2, opened, cumulative_flow, time_remaining_1, time_remaining_2, depth })
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    next_1.append(&mut next_2);
-    next_1.sort_by(|a: &ExtendedState, b: &ExtendedState| a.cumulative_flow.cmp(&b.cumulative_flow));
-    next_1.truncate(16);
-
-    next_1
+    next_states
 }
 
 fn part1(input: &[u8]) -> usize {
@@ -301,7 +312,7 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT), 0)
+        assert_eq!(part2(INPUT), 2911)
     }
 
     #[bench]
