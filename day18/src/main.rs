@@ -9,6 +9,7 @@ use std::collections::VecDeque;
 const INPUT: &[u8] = include_bytes!("input.txt");
 
 const GRID_SIZE: usize = 23;
+const GRID_CENTRE_DOUBLED: usize = 23;
 
 const POWERS_OF_TEN: [usize; 3] = [1, 10, 100];
 
@@ -79,6 +80,13 @@ impl Grid {
             (x, y, z + 1),
         ]);
     }
+
+    fn is_in_bounds(position: &(usize, usize, usize)) -> bool {
+        GRID_CENTRE_DOUBLED.abs_diff(2 * position.0).pow(2)
+            + GRID_CENTRE_DOUBLED.abs_diff(2 * position.1).pow(2)
+            + GRID_CENTRE_DOUBLED.abs_diff(2 * position.2).pow(2)
+            <= (GRID_CENTRE_DOUBLED - 1).pow(2)
+    }
 }
 
 fn part1(input: &[u8]) -> usize {
@@ -101,7 +109,7 @@ fn part2(input: &[u8]) -> usize {
     let mut visited: BitVec = bitvec![0; GRID_SIZE*GRID_SIZE*GRID_SIZE];
 
     let mut queue: VecDeque<(usize, usize, usize)> = VecDeque::new();
-    queue.push_back((1, 1, 1));
+    queue.push_back((1, GRID_SIZE / 2, GRID_SIZE / 2));
 
     let mut surface_area: usize = 0;
 
@@ -117,13 +125,7 @@ fn part2(input: &[u8]) -> usize {
             visited.set(index, true);
             Grid::copy_neighbours_into_buffer(&position, &mut neighbours_buffer);
             for next in &neighbours_buffer {
-                if next.0 == 0
-                    || next.1 == 0
-                    || next.2 == 0
-                    || next.0 > GRID_SIZE - 1
-                    || next.1 > GRID_SIZE - 1
-                    || next.2 > GRID_SIZE - 1
-                {
+                if !Grid::is_in_bounds(next) {
                     continue;
                 }
                 if visited[Grid::get_index(next)] {
