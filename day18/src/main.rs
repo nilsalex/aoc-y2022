@@ -2,86 +2,134 @@
 #![feature(test)]
 extern crate test;
 
-use std::collections::{HashSet, VecDeque};
+use bitvec::bitvec;
+use bitvec::prelude::BitVec;
+use std::collections::VecDeque;
 
 const INPUT: &[u8] = include_bytes!("input.txt");
 
-const POWERS_OF_TEN: [i8; 3] = [1, 10, 100];
+const GRID_SIZE: usize = 23;
 
-fn i8_from_bytes(bytes: &[u8]) -> i8 {
+const POWERS_OF_TEN: [usize; 3] = [1, 10, 100];
+
+fn usize_from_bytes(bytes: &[u8]) -> usize {
     bytes
         .iter()
         .rev()
         .enumerate()
-        .fold(0, |acc, (index, byte)| acc + (byte - b'0') as i8 * POWERS_OF_TEN[index])
-}
-
-fn parse_input(input: &[u8]) -> Vec<(i8, i8, i8)> {
-    input
-        .trim_ascii_end()
-        .split(|byte| *byte == b'\n')
-        .map(|line| {
-            let mut coords = line.split(|byte| *byte == b',');
-            let x = i8_from_bytes(coords.next().unwrap());
-            let y = i8_from_bytes(coords.next().unwrap());
-            let z = i8_from_bytes(coords.next().unwrap());
-            (x, y, z)
+        .fold(0, |acc, (index, byte)| {
+            acc + (byte - b'0') as usize * POWERS_OF_TEN[index]
         })
-        .collect()
 }
 
-fn neighbours(cube: &(i8, i8, i8)) -> Vec<(i8, i8, i8)> {
-    let (x, y, z) = (cube.0, cube.1, cube.2);
-    vec![(x - 1, y, z), (x + 1, y, z), (x, y - 1, z), (x, y + 1, z), (x, y, z - 1), (x, y, z + 1)]
+struct Grid {
+    grid: BitVec,
+    cubes: Vec<(usize, usize, usize)>,
+}
+
+impl Grid {
+    fn parse(bytes: &[u8]) -> Self {
+        let mut cubes = Vec::new();
+        let mut grid = bitvec![0; GRID_SIZE*GRID_SIZE*GRID_SIZE];
+
+        bytes
+            .trim_ascii_end()
+            .split(|byte| *byte == b'\n')
+            .map(|line| {
+                let mut coords = line.split(|byte| *byte == b',');
+
+                // Adding 2 to all coordinates to make sure we have a boundary of 1 and can work with
+                // unsigned integers
+                let x = usize_from_bytes(coords.next().unwrap()) + 2;
+                let y = usize_from_bytes(coords.next().unwrap()) + 2;
+                let z = usize_from_bytes(coords.next().unwrap()) + 2;
+                (x, y, z)
+            })
+            .for_each(|(x, y, z)| {
+                cubes.push((x, y, z));
+                grid.set(z * GRID_SIZE * GRID_SIZE + y * GRID_SIZE + x, true);
+            });
+
+        Grid { grid, cubes }
+    }
+
+    fn get_cubes(&self) -> &[(usize, usize, usize)] {
+        &self.cubes
+    }
+
+    fn get_index(position: &(usize, usize, usize)) -> usize {
+        position.2 * GRID_SIZE * GRID_SIZE + position.1 * GRID_SIZE + position.0
+    }
+
+    fn is_cube(&self, position: &(usize, usize, usize)) -> bool {
+        self.grid[Self::get_index(position)]
+    }
+
+    fn copy_neighbours_into_buffer(
+        position: &(usize, usize, usize),
+        neighbours: &mut [(usize, usize, usize)],
+    ) {
+        let (x, y, z) = (position.0, position.1, position.2);
+        neighbours.copy_from_slice(&[
+            (x - 1, y, z),
+            (x + 1, y, z),
+            (x, y - 1, z),
+            (x, y + 1, z),
+            (x, y, z - 1),
+            (x, y, z + 1),
+        ]);
+    }
 }
 
 fn part1(input: &[u8]) -> usize {
-    let cubes = parse_input(input);
-    let cubes_set: HashSet<(i8, i8, i8)> = HashSet::from_iter(cubes.iter().cloned());
+    let grid = Grid::parse(input);
+    let mut neighbours_buffer: Vec<(usize, usize, usize)> = vec![(0, 0, 0); 6];
 
-    cubes
-        .iter()
-        .flat_map(neighbours)
-        .filter(|cube| !cubes_set.contains(cube))
-        .count()
+    grid.get_cubes().iter().fold(0, |acc, cube| {
+        Grid::copy_neighbours_into_buffer(cube, &mut neighbours_buffer);
+        acc + neighbours_buffer
+            .iter()
+            .filter(|neighbour| !grid.is_cube(neighbour))
+            .count()
+    })
 }
 
 fn part2(input: &[u8]) -> usize {
-    let cubes = parse_input(input);
+    let grid = Grid::parse(input);
+    let mut neighbours_buffer: Vec<(usize, usize, usize)> = vec![(0, 0, 0); 6];
 
-    let (x_min, x_max, y_min, y_max, z_min, z_max) = cubes
-        .iter()
-        .fold((i8::MAX, 0, i8::MAX, 0, i8::MAX, 0), |(x_min, x_max, y_min, y_max, z_min, z_max), (x, y, z)|
-            (std::cmp::min(x_min, *x), std::cmp::max(x_max, *x),
-             std::cmp::min(y_min, *y), std::cmp::max(y_max, *y),
-             std::cmp::min(z_min, *z), std::cmp::max(z_max, *z)));
+    let mut visited: BitVec = bitvec![0; GRID_SIZE*GRID_SIZE*GRID_SIZE];
 
-    let cubes_set: HashSet<(i8, i8, i8)> = HashSet::from_iter(cubes.iter().cloned());
-
-    let mut visited: HashSet<(i8, i8, i8)> = HashSet::new();
-
-    let mut queue: VecDeque<(i8, i8, i8)> = VecDeque::new();
-    queue.push_back((x_min - 1, y_min - 1, z_min - 1));
+    let mut queue: VecDeque<(usize, usize, usize)> = VecDeque::new();
+    queue.push_back((1, 1, 1));
 
     let mut surface_area: usize = 0;
 
-    while let Some(cube) = queue.pop_front() {
-        if visited.contains(&cube) {
+    while let Some(position) = queue.pop_front() {
+        let index = Grid::get_index(&position);
+        if visited[index] {
             continue;
         }
 
-        if cubes_set.contains(&cube) {
+        if grid.is_cube(&position) {
             surface_area += 1
         } else {
-            visited.insert(cube);
-            for next in neighbours(&cube) {
-                if visited.contains(&next) {
+            visited.set(index, true);
+            Grid::copy_neighbours_into_buffer(&position, &mut neighbours_buffer);
+            for next in &neighbours_buffer {
+                if next.0 == 0
+                    || next.1 == 0
+                    || next.2 == 0
+                    || next.0 > GRID_SIZE - 1
+                    || next.1 > GRID_SIZE - 1
+                    || next.2 > GRID_SIZE - 1
+                {
                     continue;
                 }
-                if next.0 < x_min - 1 || next.1 < y_min - 1 || next.2 < z_min - 1 || next.0 > x_max + 1 || next.1 > y_max + 1 || next.2 > z_max + 1 {
+                if visited[Grid::get_index(next)] {
                     continue;
                 }
-                queue.push_back(next);
+                queue.push_back(*next);
             }
         }
     }
@@ -113,7 +161,7 @@ mod tests {
 
     #[bench]
     fn bench_parse(b: &mut Bencher) {
-        b.iter(|| parse_input(INPUT))
+        b.iter(|| Grid::parse(INPUT))
     }
 
     #[bench]
