@@ -37,11 +37,12 @@ fn neighbours(cube: &(i8, i8, i8)) -> Vec<(i8, i8, i8)> {
 
 fn part1(input: &[u8]) -> usize {
     let cubes = parse_input(input);
+    let cubes_set: HashSet<(i8, i8, i8)> = HashSet::from_iter(cubes.iter().cloned());
 
     cubes
         .iter()
         .flat_map(neighbours)
-        .filter(|cube| !cubes.contains(cube))
+        .filter(|cube| !cubes_set.contains(cube))
         .count()
 }
 
