@@ -1,8 +1,7 @@
-use std::thread;
 use regex::Regex;
 
-const INPUT: &str = include_str!("input.txt");
-// const INPUT: &str = include_str!("input_test.txt");
+// const INPUT: &str = include_str!("input.txt");
+const INPUT: &str = include_str!("input_test.txt");
 
 #[derive(Debug, Clone)]
 struct Blueprint {
@@ -137,10 +136,10 @@ fn dfs(state: &State, blueprint: &Blueprint) -> u32 {
     }
 }
 
-fn part1(input: &str) -> usize {
+fn part2(input: &str) -> usize {
     let re = Regex::new(r"Blueprint (\d+): Each ore robot costs (\d+) ore\. Each clay robot costs (\d+) ore\. Each obsidian robot costs (\d+) ore and (\d+) clay\. Each geode robot costs (\d+) ore and (\d+) obsidian\.").unwrap();
 
-    let blueprints = input.trim_end().lines().map(|line| {
+    let blueprints = input.trim_end().lines().take(3).map(|line| {
         let cap = re.captures(line).unwrap();
         Blueprint {
             id: cap[1].parse().unwrap(),
@@ -153,49 +152,25 @@ fn part1(input: &str) -> usize {
         }
     }).collect::<Vec<Blueprint>>();
 
-    let mut handles = Vec::new();
+    let initial_state = State {
+        depth: 0,
+        inventory: Inventory
+        {
+            ore: 0,
+            clay: 0,
+            obsidian: 0,
+            geodes: 0,
+            ore_robots: 1,
+            clay_robots: 0,
+            obsidian_robots: 0,
+            geode_robots: 0,
+        },
+    };
+    let max_geodes = dfs(&initial_state, &blueprints[0]);
 
-    for chunk in blueprints.chunks((blueprints.len() / 4).max(1)) {
-        let cloned_chunk = Vec::from(chunk);
-        let handle = thread::spawn(move || {
-            let mut chunk_result: usize = 0;
-            for blueprint in cloned_chunk {
-                let initial_state = State {
-                    depth: 0,
-                    inventory: Inventory
-                    {
-                        ore: 0,
-                        clay: 0,
-                        obsidian: 0,
-                        geodes: 0,
-                        ore_robots: 1,
-                        clay_robots: 0,
-                        obsidian_robots: 0,
-                        geode_robots: 0,
-                    },
-                };
-                let max_geodes = dfs(&initial_state, &blueprint);
-                println!("blueprint {}: {} geodes", blueprint.id, max_geodes);
-                chunk_result += blueprint.id as usize * max_geodes as usize;
-            }
-            chunk_result
-        });
-        handles.push(handle);
-    }
-
-    let mut result: usize = 0;
-    for handle in handles {
-        result += handle.join().unwrap()
-    }
-
-    result
-}
-
-fn part2(input: &str) -> usize {
-    0
+    max_geodes as usize
 }
 
 fn main() {
-    println!("{}", part1(INPUT));
     println!("{}", part2(INPUT));
 }
