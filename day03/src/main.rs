@@ -23,36 +23,34 @@ fn part1(input: &[u8]) -> usize {
             }
             panic!()
         })
-        .map(|common|
-            match common {
-                0..=96 => (common - 38) as usize,
-                _ => (common - 96) as usize,
-            }
-        )
+        .map(|common| match common {
+            0..=96 => (common - 38) as usize,
+            _ => (common - 96) as usize,
+        })
         .sum()
 }
 
 fn part2(input: &[u8]) -> usize {
     let lines = input.trim_ascii_end().split(|byte| *byte == NEWLINE);
 
-    lines.tuples().map(|(line1, line2, line3)| {
-        for item1 in line1 {
-            for item2 in line2 {
-                for item3 in line3 {
-                    if *item1 == *item2 && *item2 == *item3 {
-                        return *item1;
+    lines
+        .tuples()
+        .map(|(line1, line2, line3)| {
+            for item1 in line1 {
+                for item2 in line2 {
+                    for item3 in line3 {
+                        if *item1 == *item2 && *item2 == *item3 {
+                            return *item1;
+                        }
                     }
                 }
             }
-        }
-        panic!()
-    })
-        .map(|common|
-            match common {
-                0..=96 => (common - 38) as usize,
-                _ => (common - 96) as usize,
-            }
-        )
+            panic!()
+        })
+        .map(|common| match common {
+            0..=96 => (common - 38) as usize,
+            _ => (common - 96) as usize,
+        })
         .sum()
 }
 

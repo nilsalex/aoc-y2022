@@ -6,7 +6,11 @@ use std::cmp::max;
 const INPUT: &str = include_str!("input.txt");
 
 #[derive(Copy, Clone, Eq, PartialEq)]
-enum Cell { Air, Rock, Sand }
+enum Cell {
+    Air,
+    Rock,
+    Sand,
+}
 
 struct Grid {
     x_size: usize,
@@ -26,18 +30,16 @@ impl Grid {
     }
 
     fn set(&mut self, x: usize, y: usize, cell: Cell) {
-        self.cells[y*self.x_size + x] = cell
+        self.cells[y * self.x_size + x] = cell
     }
 
     fn from_lines(lines: &Vec<Line>, add_bottom: bool) -> Self {
-        let (x_max, y_max) = lines
-            .iter()
-            .fold((0, 0), |(x_max, y_max), line|
-                (
-                    max(max(x_max, line.start.0), line.end.0),
-                    max(max(y_max, line.start.1), line.end.1),
-                ),
-            );
+        let (x_max, y_max) = lines.iter().fold((0, 0), |(x_max, y_max), line| {
+            (
+                max(max(x_max, line.start.0), line.end.0),
+                max(max(y_max, line.start.1), line.end.1),
+            )
+        });
         let x_size = 2 * (x_max + 1) as usize;
         let y_size = if add_bottom {
             (y_max + 1) as usize
@@ -58,7 +60,10 @@ impl Grid {
             };
 
             for i in 0..=steps {
-                let (x, y) = ((line.start.0 + dx_ * i) as usize, (line.start.1 + dy_ * i) as usize);
+                let (x, y) = (
+                    (line.start.0 + dx_ * i) as usize,
+                    (line.start.1 + dy_ * i) as usize,
+                );
                 cells[y * x_size + x] = Cell::Rock;
             }
         }
@@ -69,7 +74,11 @@ impl Grid {
             }
         }
 
-        Grid {x_size, y_size, cells}
+        Grid {
+            x_size,
+            y_size,
+            cells,
+        }
     }
 }
 
@@ -80,7 +89,10 @@ struct Line {
 
 fn parse_node(input: &str) -> (i16, i16) {
     let mut numbers = input.split(',');
-    (numbers.next().unwrap().parse().unwrap(), numbers.next().unwrap().parse().unwrap())
+    (
+        numbers.next().unwrap().parse().unwrap(),
+        numbers.next().unwrap().parse().unwrap(),
+    )
 }
 
 fn parse_lines(input: &str) -> Vec<Line> {
@@ -90,7 +102,10 @@ fn parse_lines(input: &str) -> Vec<Line> {
         let mut nodes_it = line.split(" -> ");
         let mut current_node = nodes_it.next().unwrap();
         while let Some(next_node) = nodes_it.next() {
-            lines.push(Line { start: parse_node(current_node), end: parse_node(next_node) });
+            lines.push(Line {
+                start: parse_node(current_node),
+                end: parse_node(next_node),
+            });
             current_node = next_node
         }
     }
@@ -99,11 +114,11 @@ fn parse_lines(input: &str) -> Vec<Line> {
 }
 
 fn next(sx: usize, sy: usize, grid: &Grid) -> Option<(usize, usize)> {
-    if grid.get(sx, sy+1) == Cell::Air {
+    if grid.get(sx, sy + 1) == Cell::Air {
         Some((sx, sy + 1))
-    } else if grid.get(sx-1, sy+1) == Cell::Air {
+    } else if grid.get(sx - 1, sy + 1) == Cell::Air {
         Some((sx - 1, sy + 1))
-    } else if grid.get(sx+1, sy+1) == Cell::Air {
+    } else if grid.get(sx + 1, sy + 1) == Cell::Air {
         Some((sx + 1, sy + 1))
     } else {
         None

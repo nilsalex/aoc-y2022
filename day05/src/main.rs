@@ -6,7 +6,11 @@ const INPUT: &[u8] = include_bytes!("input.txt");
 const POWERS_OF_TEN: [u8; 3] = [1, 10, 100];
 
 fn bytes_to_u8(bytes: &[u8]) -> u8 {
-    bytes.iter().rev().enumerate().fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
+    bytes
+        .iter()
+        .rev()
+        .enumerate()
+        .fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
 }
 
 fn parse_stacks(input: &[u8]) -> Vec<Vec<u8>> {
@@ -20,7 +24,7 @@ fn parse_stacks(input: &[u8]) -> Vec<Vec<u8>> {
                 stacks[index].push(*byte)
             }
         }
-    };
+    }
     for stack in stacks.iter_mut() {
         stack.reverse()
     }

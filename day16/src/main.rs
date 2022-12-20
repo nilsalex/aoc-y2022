@@ -82,16 +82,29 @@ impl FullyConnectedGraph {
                 if v1 == v2 {
                     weights.push(0);
                 } else {
-                    weights.push(*distances.get(&(*vertex_map.get(&v1).unwrap(), *vertex_map.get(&v2).unwrap())).unwrap() as u8);
+                    weights.push(
+                        *distances
+                            .get(&(*vertex_map.get(&v1).unwrap(), *vertex_map.get(&v2).unwrap()))
+                            .unwrap() as u8,
+                    );
                 }
             }
         }
 
         let values: Vec<u8> = (0..num_vertices as u8)
-            .map(|v| *initial_graph.values.get(vertex_map.get(&v).unwrap()).unwrap() as u8)
+            .map(|v| {
+                *initial_graph
+                    .values
+                    .get(vertex_map.get(&v).unwrap())
+                    .unwrap() as u8
+            })
             .collect();
 
-        FullyConnectedGraph { num_vertices, weights, values }
+        FullyConnectedGraph {
+            num_vertices,
+            weights,
+            values,
+        }
     }
 }
 
@@ -115,7 +128,10 @@ impl InitialGraph {
             let vertex = 26 * char1 + char2;
             vertices.push(vertex);
 
-            let rate = std::str::from_utf8(&first_half[23..]).unwrap().parse().unwrap();
+            let rate = std::str::from_utf8(&first_half[23..])
+                .unwrap()
+                .parse()
+                .unwrap();
             if rate != 0 {
                 nonzero_vertices.push(vertex);
             }
@@ -125,13 +141,20 @@ impl InitialGraph {
             let second_half = &split.next().unwrap()[23..];
             for next_vertex in second_half.split(|byte| *byte == b',') {
                 let next_vertex = next_vertex.trim_ascii_start();
-                let (char1, char2) = ((next_vertex[0] - b'A') as u16, (next_vertex[1] - b'A') as u16);
+                let (char1, char2) = (
+                    (next_vertex[0] - b'A') as u16,
+                    (next_vertex[1] - b'A') as u16,
+                );
                 let next_vertex = 26 * char1 + char2;
                 edges.push((vertex, next_vertex));
             }
         }
 
-        InitialGraph { vertices, edges, values }
+        InitialGraph {
+            vertices,
+            edges,
+            values,
+        }
     }
 
     fn distances(&self) -> Distances {
@@ -159,16 +182,15 @@ impl InitialGraph {
 }
 
 fn dfs<S>(state: &S, next_fn: &impl Fn(&S) -> Vec<S>) -> Vec<usize>
-    where S: IsState {
+where
+    S: IsState,
+{
     let next_states = next_fn(state);
 
     if next_states.is_empty() {
         vec![state.get_cumulative_flow()]
     } else {
-        next_states
-            .iter()
-            .flat_map(|s| dfs(s, next_fn))
-            .collect()
+        next_states.iter().flat_map(|s| dfs(s, next_fn)).collect()
     }
 }
 
@@ -176,16 +198,25 @@ fn next_states(state: &State, graph: &FullyConnectedGraph) -> Vec<State> {
     (0..graph.num_vertices)
         .filter(|v| !state.opened[*v])
         .filter_map(|position| {
-            let (weight, rate) = (graph.get_weight(state.position, position), graph.get_value(position));
+            let (weight, rate) = (
+                graph.get_weight(state.position, position),
+                graph.get_value(position),
+            );
 
             if state.time_remaining > weight + 1 {
                 let mut opened = state.opened.clone();
                 opened[position] = true;
 
                 let time_remaining = state.time_remaining - weight - 1;
-                let cumulative_flow = state.cumulative_flow + time_remaining as usize * rate as usize;
+                let cumulative_flow =
+                    state.cumulative_flow + time_remaining as usize * rate as usize;
 
-                Some(State { position, opened, cumulative_flow, time_remaining })
+                Some(State {
+                    position,
+                    opened,
+                    cumulative_flow,
+                    time_remaining,
+                })
             } else {
                 None
             }
@@ -197,59 +228,67 @@ fn next_extended_states(state: &ExtendedState, graph: &FullyConnectedGraph) -> V
     let mut next_states = Vec::new();
 
     if state.time_remaining_1 >= state.time_remaining_2 {
-        next_states.extend((0..graph.num_vertices)
-            .filter(|v| !state.opened[*v])
-            .filter_map(|v| {
-                let (weight, rate) = (graph.get_weight(state.position_1, v), graph.get_value(v));
+        next_states.extend(
+            (0..graph.num_vertices)
+                .filter(|v| !state.opened[*v])
+                .filter_map(|v| {
+                    let (weight, rate) =
+                        (graph.get_weight(state.position_1, v), graph.get_value(v));
 
-                if state.time_remaining_1 > weight + 1 {
-                    let mut opened = state.opened.clone();
-                    opened[v] = true;
+                    if state.time_remaining_1 > weight + 1 {
+                        let mut opened = state.opened.clone();
+                        opened[v] = true;
 
-                    let time_remaining = state.time_remaining_1 - weight - 1;
-                    let cumulative_flow = state.cumulative_flow + time_remaining as usize * rate as usize;
+                        let time_remaining = state.time_remaining_1 - weight - 1;
+                        let cumulative_flow =
+                            state.cumulative_flow + time_remaining as usize * rate as usize;
 
-                    Some(ExtendedState {
-                        position_1: v,
-                        position_2: state.position_2,
-                        opened,
-                        cumulative_flow,
-                        time_remaining_1: time_remaining,
-                        time_remaining_2: state.time_remaining_2,
-                        depth: state.depth + 1,
-                    })
-                } else {
-                    None
-                }
-            }));
+                        Some(ExtendedState {
+                            position_1: v,
+                            position_2: state.position_2,
+                            opened,
+                            cumulative_flow,
+                            time_remaining_1: time_remaining,
+                            time_remaining_2: state.time_remaining_2,
+                            depth: state.depth + 1,
+                        })
+                    } else {
+                        None
+                    }
+                }),
+        );
     }
 
     if next_states.is_empty() {
-        next_states.extend((0..graph.num_vertices)
-            .filter(|v| !state.opened[*v])
-            .filter_map(|v| {
-                let (weight, rate) = (graph.get_weight(state.position_2, v), graph.get_value(v));
+        next_states.extend(
+            (0..graph.num_vertices)
+                .filter(|v| !state.opened[*v])
+                .filter_map(|v| {
+                    let (weight, rate) =
+                        (graph.get_weight(state.position_2, v), graph.get_value(v));
 
-                if state.time_remaining_2 > weight + 1 {
-                    let mut opened = state.opened.clone();
-                    opened[v] = true;
+                    if state.time_remaining_2 > weight + 1 {
+                        let mut opened = state.opened.clone();
+                        opened[v] = true;
 
-                    let time_remaining = state.time_remaining_2 - weight - 1;
-                    let cumulative_flow = state.cumulative_flow + time_remaining as usize * rate as usize;
+                        let time_remaining = state.time_remaining_2 - weight - 1;
+                        let cumulative_flow =
+                            state.cumulative_flow + time_remaining as usize * rate as usize;
 
-                    Some(ExtendedState {
-                        position_1: state.position_1,
-                        position_2: v,
-                        opened,
-                        cumulative_flow,
-                        time_remaining_1: state.time_remaining_1,
-                        time_remaining_2: time_remaining,
-                        depth: state.depth + 1,
-                    })
-                } else {
-                    None
-                }
-            }));
+                        Some(ExtendedState {
+                            position_1: state.position_1,
+                            position_2: v,
+                            opened,
+                            cumulative_flow,
+                            time_remaining_1: state.time_remaining_1,
+                            time_remaining_2: time_remaining,
+                            depth: state.depth + 1,
+                        })
+                    } else {
+                        None
+                    }
+                }),
+        );
     }
 
     if state.depth < 3 {
@@ -273,7 +312,10 @@ fn part1(input: &[u8]) -> usize {
         cumulative_flow: 0,
     };
 
-    *dfs(&initial_state, &|state| next_states(state, &graph)).iter().max().unwrap()
+    *dfs(&initial_state, &|state| next_states(state, &graph))
+        .iter()
+        .max()
+        .unwrap()
 }
 
 fn part2(input: &[u8]) -> usize {
@@ -290,7 +332,10 @@ fn part2(input: &[u8]) -> usize {
         depth: 0,
     };
 
-    *dfs(&initial_state, &|state| next_extended_states(state, &graph)).iter().max().unwrap()
+    *dfs(&initial_state, &|state| next_extended_states(state, &graph))
+        .iter()
+        .max()
+        .unwrap()
 }
 
 fn main() {

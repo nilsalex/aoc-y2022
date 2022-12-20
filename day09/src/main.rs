@@ -9,7 +9,11 @@ const INPUT: &[u8] = include_bytes!("input.txt");
 const POWERS_OF_TEN: [u8; 3] = [1, 10, 100];
 
 fn u8_from_bytes(bytes: &[u8]) -> u8 {
-    bytes.iter().rev().enumerate().fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
+    bytes
+        .iter()
+        .rev()
+        .enumerate()
+        .fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
 }
 
 fn part1(input: &[u8]) -> usize {
@@ -62,7 +66,10 @@ fn part2(input: &[u8]) -> usize {
             rope[0] += dx;
             rope[1] += dy;
             for segment in 0..9 {
-                let (diff_x, diff_y): (i32, i32) = (rope[2 * segment] - rope[2 * segment + 2], rope[2 * segment + 1] - rope[2 * segment + 3]);
+                let (diff_x, diff_y): (i32, i32) = (
+                    rope[2 * segment] - rope[2 * segment + 2],
+                    rope[2 * segment + 1] - rope[2 * segment + 3],
+                );
                 if diff_x.abs() > 1 || diff_y.abs() > 1 {
                     rope[2 * segment + 2] += diff_x.signum();
                     rope[2 * segment + 3] += diff_y.signum();

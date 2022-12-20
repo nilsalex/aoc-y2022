@@ -38,16 +38,19 @@ fn parse_sensors(input: &str) -> Vec<Sensor> {
         .map(|line| {
             let mut captures_it = re.captures_iter(line);
             let capture = captures_it.next().unwrap();
-            let position: (isize, isize) = (capture[1].parse().unwrap(), capture[2].parse().unwrap());
-            let nearest_beacon_position: (isize, isize) = (capture[3].parse().unwrap(), capture[4].parse().unwrap());
-            let nearest_beacon_distance = (nearest_beacon_position.0 - position.0).abs() + (nearest_beacon_position.1 - position.1).abs();
+            let position: (isize, isize) =
+                (capture[1].parse().unwrap(), capture[2].parse().unwrap());
+            let nearest_beacon_position: (isize, isize) =
+                (capture[3].parse().unwrap(), capture[4].parse().unwrap());
+            let nearest_beacon_distance = (nearest_beacon_position.0 - position.0).abs()
+                + (nearest_beacon_position.1 - position.1).abs();
             Sensor {
                 position,
                 nearest_beacon_position,
                 nearest_beacon_distance,
             }
-        }
-        ).collect()
+        })
+        .collect()
 }
 
 fn part1(input: &str) -> usize {
@@ -72,7 +75,10 @@ fn part1(input: &str) -> usize {
             let remaining_dist = sensor.nearest_beacon_distance - vertical_dist;
             let next_x = sensor.position.0 + remaining_dist + 1;
             result += (next_x - x) as usize;
-            if sensor.nearest_beacon_position.1 == row && x <= sensor.nearest_beacon_position.0 && next_x > sensor.nearest_beacon_position.0 {
+            if sensor.nearest_beacon_position.1 == row
+                && x <= sensor.nearest_beacon_position.0
+                && next_x > sensor.nearest_beacon_position.0
+            {
                 result -= 1;
             }
             x = next_x;

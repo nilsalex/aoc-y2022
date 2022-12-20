@@ -6,7 +6,11 @@ use std::collections::HashMap;
 
 const INPUT: &str = include_str!("input.txt");
 
-fn total_size(dir_name: &str, size_map: &HashMap<String, usize>, dir_map: &HashMap<String, Vec<String>>) -> usize {
+fn total_size(
+    dir_name: &str,
+    size_map: &HashMap<String, usize>,
+    dir_map: &HashMap<String, Vec<String>>,
+) -> usize {
     let mut result = *size_map.get(dir_name).unwrap_or(&0);
 
     if let Some(subdirs) = dir_map.get(dir_name) {
@@ -36,8 +40,7 @@ fn part1(input: &str) -> usize {
     for line in input.lines() {
         if line == "$ cd .." {
             cur_dir.pop();
-        }
-        else if line.starts_with("$ cd") {
+        } else if line.starts_with("$ cd") {
             cur_dir.push(String::from(&line[5..]));
             let cur_dir_name = dir_name(&cur_dir);
             all_dirs.push(cur_dir_name)
@@ -61,7 +64,7 @@ fn part1(input: &str) -> usize {
                 size_map.insert(cur_dir_name, *size);
             }
         }
-    };
+    }
 
     let mut result = 0;
 
@@ -84,8 +87,7 @@ fn part2(input: &str) -> usize {
     for line in input.lines() {
         if line == "$ cd .." {
             cur_dir.pop();
-        }
-        else if line.starts_with("$ cd") {
+        } else if line.starts_with("$ cd") {
             cur_dir.push(String::from(&line[5..]));
             let cur_dir_name = dir_name(&cur_dir);
             all_dirs.push(cur_dir_name)
@@ -109,7 +111,7 @@ fn part2(input: &str) -> usize {
                 size_map.insert(cur_dir_name, *size);
             }
         }
-    };
+    }
 
     let free_space = 70000000 - total_size("/", &size_map, &dir_map) as isize;
     let to_free = 30000000 - free_space;
@@ -117,9 +119,9 @@ fn part2(input: &str) -> usize {
     all_dirs
         .iter()
         .map(|dir| {
-        let dir_size = total_size(dir, &size_map, &dir_map) as isize;
-        (dir_size - to_free, dir_size)
-    })
+            let dir_size = total_size(dir, &size_map, &dir_map) as isize;
+            (dir_size - to_free, dir_size)
+        })
         .filter(|(diff, _)| *diff >= 0)
         .min_by(|(diff1, _), (diff2, _)| diff1.cmp(diff2))
         .unwrap()

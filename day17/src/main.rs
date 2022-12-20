@@ -8,7 +8,10 @@ const INPUT: &[u8] = include_bytes!("input.txt");
 // const INPUT: &[u8] = b">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
 
 #[derive(Copy, Clone, Debug)]
-enum Instruction { L, R }
+enum Instruction {
+    L,
+    R,
+}
 
 #[derive(Debug)]
 struct Instructions {
@@ -18,22 +21,31 @@ struct Instructions {
 impl Instructions {
     fn from_bytes(bytes: &[u8]) -> Self {
         Self {
-            instructions: Vec::from(bytes.trim_ascii_end())
+            instructions: Vec::from(bytes.trim_ascii_end()),
         }
     }
 
     fn get(&self, pos: usize) -> Instruction {
         match self.instructions[pos % self.instructions.len()] {
-                b'<' => Instruction::L,
-                b'>' => Instruction::R,
-                _ => panic!(),
+            b'<' => Instruction::L,
+            b'>' => Instruction::R,
+            _ => panic!(),
         }
     }
 }
 
-enum FallResult { Resting, Moving }
+enum FallResult {
+    Resting,
+    Moving,
+}
 
-enum Piece { Plus, Minus, L, I, Square }
+enum Piece {
+    Plus,
+    Minus,
+    L,
+    I,
+    Square,
+}
 
 impl Piece {
     const fn next(&self) -> Self {
@@ -66,7 +78,11 @@ impl Piece {
     }
 }
 
-fn shift(piece_pattern: &mut Vec<(usize, usize)>, rocks: &HashSet<(usize, usize)>, instruction: Instruction) {
+fn shift(
+    piece_pattern: &mut Vec<(usize, usize)>,
+    rocks: &HashSet<(usize, usize)>,
+    instruction: Instruction,
+) {
     let mut next_pattern = piece_pattern.clone();
     match instruction {
         Instruction::L => {
@@ -95,7 +111,10 @@ fn shift(piece_pattern: &mut Vec<(usize, usize)>, rocks: &HashSet<(usize, usize)
     std::mem::swap(&mut next_pattern, piece_pattern)
 }
 
-fn fall(piece_pattern: &mut Vec<(usize, usize)>, rocks: &mut HashSet<(usize, usize)>) -> FallResult {
+fn fall(
+    piece_pattern: &mut Vec<(usize, usize)>,
+    rocks: &mut HashSet<(usize, usize)>,
+) -> FallResult {
     let mut next_pattern = piece_pattern.clone();
     for (y, x) in next_pattern.iter_mut() {
         if *y == 0 {
@@ -130,7 +149,10 @@ fn part1(input: &[u8]) -> usize {
         match fall(&mut piece_pattern, &mut rocks) {
             FallResult::Moving => {}
             FallResult::Resting => {
-                height = std::cmp::max(height, piece_pattern.iter().map(|(y, _)| *y + 1).max().unwrap());
+                height = std::cmp::max(
+                    height,
+                    piece_pattern.iter().map(|(y, _)| *y + 1).max().unwrap(),
+                );
                 piece = piece.next();
                 piece_pattern = piece.initial_pattern(height);
                 pieces_count += 1;
@@ -163,7 +185,10 @@ fn part2(input: &[u8]) -> usize {
             FallResult::Moving => {}
             FallResult::Resting => {
                 let old_height = height;
-                height = std::cmp::max(height, piece_pattern.iter().map(|(y, _)| *y + 1).max().unwrap());
+                height = std::cmp::max(
+                    height,
+                    piece_pattern.iter().map(|(y, _)| *y + 1).max().unwrap(),
+                );
                 piece = piece.next();
                 piece_pattern = piece.initial_pattern(height);
                 pieces_count += 1;
@@ -203,7 +228,8 @@ fn part2(input: &[u8]) -> usize {
     let after = (total - before) % cycle_length;
 
     let sum_before: usize = diffs.iter().take(before).sum();
-    let sum_fitting: usize = diffs.iter().skip(before).take(cycle_length).sum::<usize>() * fitting_cycles;
+    let sum_fitting: usize =
+        diffs.iter().skip(before).take(cycle_length).sum::<usize>() * fitting_cycles;
     let sum_after: usize = diffs.iter().skip(before).take(after).sum();
 
     sum_before + sum_fitting + sum_after

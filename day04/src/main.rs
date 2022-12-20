@@ -7,7 +7,11 @@ const INPUT: &[u8] = include_bytes!("input.txt");
 const POWERS_OF_TEN: [u8; 3] = [1, 10, 100];
 
 fn u8_from_bytes(bytes: &[u8]) -> u8 {
-    bytes.iter().rev().enumerate().fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
+    bytes
+        .iter()
+        .rev()
+        .enumerate()
+        .fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
 }
 
 fn numbers_from_line(bytes: &[u8]) -> (u8, u8, u8, u8) {

@@ -8,32 +8,46 @@ const POWERS_OF_TEN: [i8; 3] = [1, 10, 100];
 
 fn i8_from_bytes(bytes: &[u8]) -> i8 {
     if bytes[0] == b'-' {
-        bytes.iter().skip(1).rev().enumerate().fold(0, |acc, (ix, x)| acc + (48 - *x as i8) * POWERS_OF_TEN[ix])
+        bytes
+            .iter()
+            .skip(1)
+            .rev()
+            .enumerate()
+            .fold(0, |acc, (ix, x)| acc + (48 - *x as i8) * POWERS_OF_TEN[ix])
     } else {
-        bytes.iter().rev().enumerate().fold(0, |acc, (ix, x)| acc + (*x as i8 - 48) * POWERS_OF_TEN[ix])
+        bytes
+            .iter()
+            .rev()
+            .enumerate()
+            .fold(0, |acc, (ix, x)| acc + (*x as i8 - 48) * POWERS_OF_TEN[ix])
     }
 }
-
 
 fn part1(input: &[u8]) -> isize {
     input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
-        .fold((1_isize, 1_isize, 0_isize), |(cycle, register, signal), instruction| {
-            let (mut new_cycle, mut new_signal) = (cycle, signal);
-            if (new_cycle + 20) % 40 == 0 {
-                new_signal += (new_cycle as isize) * register;
-            }
-            new_cycle += 1;
-            if instruction[0] == b'n' {
-                (new_cycle, register, new_signal)
-            } else {
+        .fold(
+            (1_isize, 1_isize, 0_isize),
+            |(cycle, register, signal), instruction| {
+                let (mut new_cycle, mut new_signal) = (cycle, signal);
                 if (new_cycle + 20) % 40 == 0 {
                     new_signal += (new_cycle as isize) * register;
                 }
-                (new_cycle + 1, register + i8_from_bytes(&instruction[5..]) as isize, new_signal)
-            }
-        },
+                new_cycle += 1;
+                if instruction[0] == b'n' {
+                    (new_cycle, register, new_signal)
+                } else {
+                    if (new_cycle + 20) % 40 == 0 {
+                        new_signal += (new_cycle as isize) * register;
+                    }
+                    (
+                        new_cycle + 1,
+                        register + i8_from_bytes(&instruction[5..]) as isize,
+                        new_signal,
+                    )
+                }
+            },
         )
         .2
 }
@@ -103,7 +117,7 @@ mod tests {
 #.#..#..#.#..#.#.#..#..#.#..#.#....#.#..
 #..#..##..#..#.#..#.#..#.###..####.#..#.
 "
-                .trim_start()
+            .trim_start()
         )
     }
 

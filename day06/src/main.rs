@@ -6,11 +6,18 @@ use std::collections::HashMap;
 const INPUT: &[u8] = include_bytes!("input.txt");
 
 fn part1(input: &[u8]) -> usize {
-    input.windows(4).position(|w| {
-        w[0] != w[1] && w[0] != w[2] && w[0] != w[3] &&
-            w[1] != w[2] && w[1] != w[3] &&
-            w[2] != w[3]
-    }).unwrap() + 4
+    input
+        .windows(4)
+        .position(|w| {
+            w[0] != w[1]
+                && w[0] != w[2]
+                && w[0] != w[3]
+                && w[1] != w[2]
+                && w[1] != w[3]
+                && w[2] != w[3]
+        })
+        .unwrap()
+        + 4
 }
 
 fn part2(input: &[u8]) -> usize {
@@ -18,8 +25,12 @@ fn part2(input: &[u8]) -> usize {
 
     for item in &input[0..14] {
         match counts.get_mut(item) {
-            None => { counts.insert(*item, 1); }
-            Some(c) => { *c += 1; }
+            None => {
+                counts.insert(*item, 1);
+            }
+            Some(c) => {
+                *c += 1;
+            }
         }
     }
 
@@ -33,7 +44,9 @@ fn part2(input: &[u8]) -> usize {
         match counts.get_mut(&window[0]) {
             None => panic!(),
             Some(c) => {
-                if *c > 1 { *c -= 1; } else {
+                if *c > 1 {
+                    *c -= 1;
+                } else {
                     counts.remove(&window[0]);
                     diff_count -= 1;
                 };
@@ -44,7 +57,9 @@ fn part2(input: &[u8]) -> usize {
                 counts.insert(window[14], 1);
                 diff_count += 1;
             }
-            Some(c) => { *c += 1; }
+            Some(c) => {
+                *c += 1;
+            }
         }
         result += 1
     }

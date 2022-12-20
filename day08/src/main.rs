@@ -94,7 +94,7 @@ fn part2(input: &[u8]) -> usize {
             }
 
             for k in 1..grid[i].len() {
-                if j + k > grid[i].len()-1 {
+                if j + k > grid[i].len() - 1 {
                     score *= k - 1;
                     break;
                 } else if grid[i][j + k] >= height {
@@ -114,7 +114,7 @@ fn part2(input: &[u8]) -> usize {
             }
 
             for k in 1..grid.len() {
-                if i + k > grid.len()-1 {
+                if i + k > grid.len() - 1 {
                     score *= k - 1;
                     break;
                 } else if grid[i + k][j] >= height {
