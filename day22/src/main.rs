@@ -383,29 +383,30 @@ fn solution(input: &[u8], faces: &[Face]) -> usize {
     let instructions = parse_instructions(input);
     let grid = Grid::parse(input);
 
-    let mut face: &Face = &faces[0];
-    let mut row: usize = 0;
-    let mut col: usize = 0;
-    let mut dir = Direction::R;
+    let (face, dir, row, col) = instructions
+        .iter()
+        .fold((&faces[0], Direction::R, 0_usize, 0_usize), |(face, dir, row, col), instruction|
+            if let Instruction::Fwd(v) = instruction {
+                let (mut face, mut dir, mut row, mut col) = (face, dir, row, col);
 
-    for instruction in instructions {
-        if let Instruction::Fwd(v) = instruction {
-            for _ in 0..v {
-                if let AfterStep::Proceed(next_face_id, next_direction, next_row, next_col) =
-                    grid.fwd(faces, &dir, face, row, col)
-                {
-                    face = &faces[next_face_id];
-                    dir = next_direction;
-                    row = next_row;
-                    col = next_col;
-                } else {
-                    break;
+                for _ in 0..*v {
+                    if let AfterStep::Proceed(next_face_id, next_direction, next_row, next_col) =
+                        grid.fwd(faces, &dir, face, row, col)
+                    {
+                        face = &faces[next_face_id];
+                        dir = next_direction;
+                        row = next_row;
+                        col = next_col;
+                    } else {
+                        break;
+                    }
                 }
-            }
-        } else {
-            dir = dir.turn(&instruction)
-        }
-    }
+
+                (face, dir, row, col)
+            } else {
+                (face, dir.turn(instruction), row, col)
+            },
+        );
 
     (face.position.0 + row + 1) * 1000 + 4 * (face.position.1 + col + 1) + dir.score()
 }
