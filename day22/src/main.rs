@@ -5,8 +5,9 @@ extern crate test;
 const INPUT: &[u8] = include_bytes!("input.txt");
 
 const CUBE_SIZE: usize = 50;
+const NUM_FACES: usize = 6;
 
-const FACES_2D: [Face; 6] = [
+const FACES_2D: [Face; NUM_FACES] = [
     Face {
         id: 0,
         position: (0, CUBE_SIZE),
@@ -57,7 +58,7 @@ const FACES_2D: [Face; 6] = [
     },
 ];
 
-const FACES_3D: [Face; 6] = [
+const FACES_3D: [Face; NUM_FACES] = [
     Face {
         id: 0,
         position: (0, CUBE_SIZE),
@@ -178,7 +179,6 @@ struct Face {
 
 #[derive(Debug, Copy, Clone)]
 enum Cell {
-    Outside,
     Open,
     Wall,
 }
@@ -189,12 +189,16 @@ enum AfterStep {
 }
 
 struct Grid {
-    cells: Vec<Vec<Cell>>,
+    cells: [Cell; NUM_FACES * CUBE_SIZE * CUBE_SIZE],
 }
 
 impl Grid {
-    fn cell_on_face(&self, face: &Face, row: usize, col: usize) -> Cell {
-        self.cells[face.position.0 + row][face.position.1 + col]
+    fn set_cell_as_wall(&mut self, face_id: usize, row: usize, col: usize) {
+        self.cells[face_id * CUBE_SIZE * CUBE_SIZE + row * CUBE_SIZE + col] = Cell::Wall
+    }
+
+    fn get_cell(&self, face_id: usize, row: usize, col: usize) -> Cell {
+        self.cells[face_id * CUBE_SIZE * CUBE_SIZE + row * CUBE_SIZE + col]
     }
 
     fn fwd(
@@ -267,8 +271,7 @@ impl Grid {
                 }
             }
         };
-        match self.cell_on_face(next_face, next_row, next_col) {
-            Cell::Outside => panic!(),
+        match self.get_cell(next_face.id, next_row, next_col) {
             Cell::Open => AfterStep::Proceed(next_face.id, *next_dir, next_row, next_col),
             Cell::Wall => AfterStep::HitWall,
         }
@@ -284,28 +287,57 @@ impl Grid {
     }
 
     fn parse(input: &[u8]) -> Self {
-        Self {
-            cells: input
-                .split(|byte| *byte == b'\n')
-                .take_while(|line| !line.is_empty())
-                .map(|line| {
-                    line.iter()
-                        .map(|byte| match byte {
-                            b' ' => Cell::Outside,
-                            b'.' => Cell::Open,
-                            b'#' => Cell::Wall,
-                            _ => panic!(),
-                        })
-                        .collect::<Vec<Cell>>()
-                })
-                .map(|mut row| {
-                    for _ in 0..3 * CUBE_SIZE - row.len() {
-                        row.push(Cell::Outside);
-                    }
-                    row
-                })
-                .collect(),
+        let mut grid = Grid { cells: [Cell::Open; NUM_FACES * CUBE_SIZE * CUBE_SIZE] };
+
+        let mut lines_it = input.split(|byte| *byte == b'\n');
+
+        for (row, line) in lines_it.by_ref().enumerate().take(CUBE_SIZE) {
+            let mut line_it = line.iter();
+            for (column, cell) in line_it.by_ref().skip(CUBE_SIZE).enumerate().take(CUBE_SIZE) {
+                if *cell == b'#' {
+                    grid.set_cell_as_wall(0, row, column);
+                }
+            }
+            for (column, cell) in line_it.by_ref().enumerate().take(CUBE_SIZE) {
+                if *cell == b'#' {
+                    grid.set_cell_as_wall(1, row, column);
+                }
+            }
         }
+
+        for (row, line) in lines_it.by_ref().enumerate().take(CUBE_SIZE) {
+            let mut line_it = line.iter();
+            for (column, cell) in line_it.by_ref().skip(CUBE_SIZE).enumerate().take(CUBE_SIZE) {
+                if *cell == b'#' {
+                    grid.set_cell_as_wall(2, row, column);
+                }
+            }
+        }
+
+        for (row, line) in lines_it.by_ref().enumerate().take(CUBE_SIZE) {
+            let mut line_it = line.iter();
+            for (column, cell) in line_it.by_ref().enumerate().take(CUBE_SIZE) {
+                if *cell == b'#' {
+                    grid.set_cell_as_wall(3, row, column);
+                }
+            }
+            for (column, cell) in line_it.by_ref().enumerate().take(CUBE_SIZE) {
+                if *cell == b'#' {
+                    grid.set_cell_as_wall(4, row, column);
+                }
+            }
+        }
+
+        for (row, line) in lines_it.by_ref().enumerate().take(CUBE_SIZE) {
+            let mut line_it = line.iter();
+            for (column, cell) in line_it.by_ref().enumerate().take(CUBE_SIZE) {
+                if *cell == b'#' {
+                    grid.set_cell_as_wall(5, row, column);
+                }
+            }
+        }
+
+        grid
     }
 }
 
