@@ -1,6 +1,120 @@
 #![feature(byte_slice_trim_ascii)]
+#![feature(test)]
+extern crate test;
 
 const INPUT: &[u8] = include_bytes!("input.txt");
+
+const CUBE_SIZE: usize = 50;
+
+const FACES_2D: [Face; 6] = [
+    Face {
+        id: 0,
+        position: (0, CUBE_SIZE),
+        next_up: (4, Direction::U, Orientation::Normal),
+        next_down: (2, Direction::D, Orientation::Normal),
+        next_left: (1, Direction::L, Orientation::Normal),
+        next_right: (1, Direction::R, Orientation::Normal),
+    },
+    Face {
+        id: 1,
+        position: (0, 2 * CUBE_SIZE),
+        next_up: (1, Direction::U, Orientation::Normal),
+        next_down: (1, Direction::D, Orientation::Normal),
+        next_left: (0, Direction::L, Orientation::Normal),
+        next_right: (0, Direction::R, Orientation::Normal),
+    },
+    Face {
+        id: 2,
+        position: (CUBE_SIZE, CUBE_SIZE),
+        next_up: (0, Direction::U, Orientation::Normal),
+        next_down: (4, Direction::D, Orientation::Normal),
+        next_left: (2, Direction::L, Orientation::Normal),
+        next_right: (2, Direction::R, Orientation::Normal),
+    },
+    Face {
+        id: 3,
+        position: (2 * CUBE_SIZE, 0),
+        next_up: (5, Direction::U, Orientation::Normal),
+        next_down: (5, Direction::D, Orientation::Normal),
+        next_left: (4, Direction::L, Orientation::Normal),
+        next_right: (4, Direction::R, Orientation::Normal),
+    },
+    Face {
+        id: 4,
+        position: (2 * CUBE_SIZE, CUBE_SIZE),
+        next_up: (2, Direction::U, Orientation::Normal),
+        next_down: (0, Direction::D, Orientation::Normal),
+        next_left: (3, Direction::L, Orientation::Normal),
+        next_right: (3, Direction::R, Orientation::Normal),
+    },
+    Face {
+        id: 5,
+        position: (3 * CUBE_SIZE, 0),
+        next_up: (3, Direction::U, Orientation::Normal),
+        next_down: (3, Direction::D, Orientation::Normal),
+        next_left: (5, Direction::L, Orientation::Normal),
+        next_right: (5, Direction::R, Orientation::Normal),
+    },
+];
+
+const FACES_3D: [Face; 6] = [
+    Face {
+        id: 0,
+        position: (0, CUBE_SIZE),
+        next_up: (5, Direction::R, Orientation::Normal),
+        next_down: (2, Direction::D, Orientation::Normal),
+        next_left: (3, Direction::R, Orientation::Flipped),
+        next_right: (1, Direction::R, Orientation::Normal),
+    },
+    Face {
+        id: 1,
+        position: (0, 2 * CUBE_SIZE),
+        next_up: (5, Direction::U, Orientation::Normal),
+        next_down: (2, Direction::L, Orientation::Normal),
+        next_left: (0, Direction::L, Orientation::Normal),
+        next_right: (4, Direction::L, Orientation::Flipped),
+    },
+    Face {
+        id: 2,
+        position: (CUBE_SIZE, CUBE_SIZE),
+        next_up: (0, Direction::U, Orientation::Normal),
+        next_down: (4, Direction::D, Orientation::Normal),
+        next_left: (3, Direction::D, Orientation::Normal),
+        next_right: (1, Direction::U, Orientation::Normal),
+    },
+    Face {
+        id: 3,
+        position: (2 * CUBE_SIZE, 0),
+        next_up: (2, Direction::R, Orientation::Normal),
+        next_down: (5, Direction::D, Orientation::Normal),
+        next_left: (0, Direction::R, Orientation::Flipped),
+        next_right: (4, Direction::R, Orientation::Normal),
+    },
+    Face {
+        id: 4,
+        position: (2 * CUBE_SIZE, CUBE_SIZE),
+        next_up: (2, Direction::U, Orientation::Normal),
+        next_down: (5, Direction::L, Orientation::Normal),
+        next_left: (3, Direction::L, Orientation::Normal),
+        next_right: (1, Direction::L, Orientation::Flipped),
+    },
+    Face {
+        id: 5,
+        position: (3 * CUBE_SIZE, 0),
+        next_up: (3, Direction::U, Orientation::Normal),
+        next_down: (1, Direction::D, Orientation::Normal),
+        next_left: (0, Direction::D, Orientation::Normal),
+        next_right: (4, Direction::U, Orientation::Normal),
+    },
+];
+
+const POWERS_OF_TEN: [usize; 2] = [1, 10];
+
+fn usize_from_bytes(bytes: &[u8]) -> usize {
+    bytes.iter().rev().enumerate().fold(0, |acc, (ix, c)| {
+        acc + (c - b'0') as usize * POWERS_OF_TEN[ix]
+    })
+}
 
 #[derive(Debug, Copy, Clone)]
 enum Instruction {
@@ -14,13 +128,13 @@ enum Direction {
     U,
     L,
     R,
-    D
+    D,
 }
 
 impl Direction {
     fn turn(&self, instruction: &Instruction) -> Self {
         match instruction {
-            Instruction::Fwd(_) => *self,
+            Instruction::Fwd(_) => panic!(),
             Instruction::L => match self {
                 Direction::U => Self::L,
                 Direction::L => Self::D,
@@ -47,13 +161,19 @@ impl Direction {
 }
 
 #[derive(Debug)]
+enum Orientation {
+    Normal,
+    Flipped,
+}
+
+#[derive(Debug)]
 struct Face {
     id: usize,
     position: (usize, usize),
-    next_up: (u8, Direction),
-    next_down: (u8, Direction),
-    next_left: (u8, Direction),
-    next_right: (u8, Direction),
+    next_up: (usize, Direction, Orientation),
+    next_down: (usize, Direction, Orientation),
+    next_left: (usize, Direction, Orientation),
+    next_right: (usize, Direction, Orientation),
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -63,256 +183,173 @@ enum Cell {
     Wall,
 }
 
+enum AfterStep {
+    HitWall,
+    Proceed(usize, Direction, usize, usize),
+}
+
 struct Grid {
     cells: Vec<Vec<Cell>>,
 }
 
 impl Grid {
-    fn rows(&self) -> usize {
-        self.cells.len()
+    fn cell_on_face(&self, face: &Face, row: usize, col: usize) -> Cell {
+        self.cells[face.position.0 + row][face.position.1 + col]
     }
 
-    fn cols(&self) -> usize {
-        self.cells[0].len()
-    }
-
-    fn cell(&self, row: usize, col: usize) -> Cell {
-        self.cells[row][col]
-    }
-
-    fn fwd_3d(&self, dir: &Direction, face: &Face, row: usize, col: usize) -> (bool, usize, Direction, usize, usize) {
-        match dir {
-            Direction::U => {}
-            Direction::L => {}
-            Direction::R => {}
-            Direction::D => {}
-        }
-        panic!();
-    }
-
-    fn fwd(&self, dir: &Direction, row: usize, col: usize) -> (bool, usize, usize) {
-        match dir {
+    fn fwd(
+        &self,
+        faces: &[Face],
+        dir: &Direction,
+        face: &Face,
+        row: usize,
+        col: usize,
+    ) -> AfterStep {
+        let (next_face, next_dir, next_row, next_col) = match dir {
             Direction::U => {
-                let next_row = row.checked_sub(1).unwrap_or(self.rows()-1);
-
-                match self.cell(next_row, col) {
-                    Cell::Open => {
-                        return (true, next_row, col);
-                    },
-                    Cell::Wall => {
-                        return (false, 0, 0);
-                    },
-                    Cell::Outside => {
-                        return self.fwd(dir, next_row, col);
-                    }
+                if row > 0 {
+                    (face, dir, row - 1, col)
+                } else {
+                    let next_face = &faces[face.next_up.0];
+                    let next_dir = &face.next_up.1;
+                    let col = if let Orientation::Flipped = face.next_up.2 {
+                        CUBE_SIZE - col - 1
+                    } else {
+                        col
+                    };
+                    let (next_row, next_col) = Self::pos_on_next_face(next_dir, col);
+                    (next_face, next_dir, next_row, next_col)
                 }
-            },
+            }
             Direction::L => {
-                let next_col = col.checked_sub(1).unwrap_or(self.cols()-1);
-
-                match self.cell(row, next_col) {
-                    Cell::Open => {
-                        return (true, row, next_col);
-                    },
-                    Cell::Wall => {
-                        return (false, 0, 0);
-                    },
-                    Cell::Outside => {
-                        return self.fwd(dir, row, next_col);
-                    }
+                if col > 0 {
+                    (face, dir, row, col - 1)
+                } else {
+                    let next_face = &faces[face.next_left.0];
+                    let next_dir = &face.next_left.1;
+                    let row = if let Orientation::Flipped = face.next_left.2 {
+                        CUBE_SIZE - row - 1
+                    } else {
+                        row
+                    };
+                    let (next_row, next_col) = Self::pos_on_next_face(next_dir, row);
+                    (next_face, next_dir, next_row, next_col)
                 }
-            },
+            }
             Direction::R => {
-                let next_col = (col + 1) % self.cols();
-
-                match self.cell(row, next_col) {
-                    Cell::Open => {
-                        return (true, row, next_col);
-                    },
-                    Cell::Wall => {
-                        return (false, 0, 0);
-                    },
-                    Cell::Outside => {
-                        return self.fwd(dir, row, next_col);
-                    }
+                if col < CUBE_SIZE - 1 {
+                    (face, dir, row, col + 1)
+                } else {
+                    let next_face = &faces[face.next_right.0];
+                    let next_dir = &face.next_right.1;
+                    let row = if let Orientation::Flipped = face.next_right.2 {
+                        CUBE_SIZE - row - 1
+                    } else {
+                        row
+                    };
+                    let (next_row, next_col) = Self::pos_on_next_face(next_dir, row);
+                    (next_face, next_dir, next_row, next_col)
                 }
             }
             Direction::D => {
-                let next_row = (row + 1) % self.rows();
+                if row < CUBE_SIZE - 1 {
+                    (face, dir, row + 1, col)
+                } else {
+                    let next_face = &faces[face.next_down.0];
+                    let next_dir = &face.next_down.1;
+                    let col = if let Orientation::Flipped = face.next_down.2 {
+                        CUBE_SIZE - col - 1
+                    } else {
+                        col
+                    };
+                    let (next_row, next_col) = Self::pos_on_next_face(next_dir, col);
+                    (next_face, next_dir, next_row, next_col)
+                }
+            }
+        };
+        match self.cell_on_face(next_face, next_row, next_col) {
+            Cell::Outside => panic!(),
+            Cell::Open => AfterStep::Proceed(next_face.id, *next_dir, next_row, next_col),
+            Cell::Wall => AfterStep::HitWall,
+        }
+    }
 
-                match self.cell(next_row, col) {
-                    Cell::Open => {
-                        return (true, next_row, col);
-                    },
-                    Cell::Wall => {
-                        return (false, 0, 0);
-                    },
-                    Cell::Outside => {
-                        return self.fwd(dir, next_row, col);
+    fn pos_on_next_face(dir: &Direction, pos_on_border: usize) -> (usize, usize) {
+        match dir {
+            Direction::U => (CUBE_SIZE - 1, pos_on_border),
+            Direction::L => (pos_on_border, CUBE_SIZE - 1),
+            Direction::R => (pos_on_border, 0),
+            Direction::D => (0, pos_on_border),
+        }
+    }
+
+    fn parse(input: &[u8]) -> Self {
+        Self {
+            cells: input
+                .split(|byte| *byte == b'\n')
+                .take_while(|line| !line.is_empty())
+                .map(|line| {
+                    line.iter()
+                        .map(|byte| match byte {
+                            b' ' => Cell::Outside,
+                            b'.' => Cell::Open,
+                            b'#' => Cell::Wall,
+                            _ => panic!(),
+                        })
+                        .collect::<Vec<Cell>>()
+                })
+                .map(|mut row| {
+                    for _ in 0..3 * CUBE_SIZE - row.len() {
+                        row.push(Cell::Outside);
                     }
-                }
-            }
+                    row
+                })
+                .collect(),
         }
     }
 }
 
-fn part1(input: &[u8]) -> usize {
-    let input = input.trim_ascii_end();
+fn parse_instructions(input: &[u8]) -> Vec<Instruction> {
+    let bytes = input
+        .trim_ascii_end()
+        .rsplit(|byte| *byte == b'\n')
+        .next()
+        .unwrap()
+        .iter();
 
-    let input_instructions = input.split(|byte| *byte == b'\n').last().unwrap();
+    let mut buf: Vec<u8> = Vec::with_capacity(2);
+    let mut instructions = Vec::new();
 
-    let instructions = input_instructions
-        .split_inclusive(|byte| *byte == b'L' || *byte == b'R')
-        .flat_map(|str| {
-            if let Ok(v) = std::str::from_utf8(str).unwrap().parse::<usize>() {
-                vec![Instruction::Fwd(v)]
-            } else {
-                vec![Instruction::Fwd(std::str::from_utf8(&str[0..str.len() - 1]).unwrap().parse::<usize>().unwrap()),
-                     match str.last().unwrap() {
-                         b'L' => Instruction::L,
-                         b'R' => Instruction::R,
-                         _ => panic!(),
-                     }]
-            }
-        })
-        .collect::<Vec<Instruction>>();
-
-    let row_size = input.iter().take_while(|byte| **byte != b'\n').count();
-
-    let grid: Grid = Grid {
-        cells: input
-            .split(|byte| *byte == b'\n')
-            .filter(|line| line.len() <= row_size && !line.is_empty())
-            .map(|line| line.iter().map(|byte| match byte {
-                b' ' => Cell::Outside,
-                b'.' => Cell::Open,
-                b'#' => Cell::Wall,
-                _ => panic!(),
-            }).collect::<Vec<Cell>>())
-            .map(|mut row| {
-                for _ in 0..row_size - row.len() {
-                    row.push(Cell::Outside);
-                };
-                row
-            })
-            .collect()
-    };
-
-    let start_col = grid.cells[0].iter().position(|c| matches!(c, Cell::Open)).unwrap();
-
-    let (mut row, mut col) = (0_usize, start_col);
-    let mut dir = Direction::R;
-
-    for instruction in instructions {
-        if let Instruction::Fwd(v) = instruction {
-            for _ in 0..v {
-                let (no_wall, next_row, next_col) = grid.fwd(&dir, row, col);
-                if !no_wall {
-                    break;
+    for byte in bytes {
+        match byte {
+            b'L' => {
+                if !buf.is_empty() {
+                    instructions.push(Instruction::Fwd(usize_from_bytes(&buf)));
+                    buf.clear()
                 }
-                row = next_row;
-                col = next_col;
+                instructions.push(Instruction::L)
             }
-        } else {
-            dir = dir.turn(&instruction)
+            b'R' => {
+                if !buf.is_empty() {
+                    instructions.push(Instruction::Fwd(usize_from_bytes(&buf)));
+                    buf.clear()
+                }
+                instructions.push(Instruction::R)
+            }
+            _ => buf.push(*byte),
         }
     }
 
-    (row + 1) * 1000 + 4 * (col + 1) + dir.score()
+    if !buf.is_empty() {
+        instructions.push(Instruction::Fwd(usize_from_bytes(&buf)));
+    }
+
+    instructions
 }
 
-fn part2(input: &[u8]) -> usize {
-    let input = input.trim_ascii_end();
-
-    let input_instructions = input.split(|byte| *byte == b'\n').last().unwrap();
-
-    let instructions = input_instructions
-        .split_inclusive(|byte| *byte == b'L' || *byte == b'R')
-        .flat_map(|str| {
-            if let Ok(v) = std::str::from_utf8(str).unwrap().parse::<usize>() {
-                vec![Instruction::Fwd(v)]
-            } else {
-                vec![Instruction::Fwd(std::str::from_utf8(&str[0..str.len() - 1]).unwrap().parse::<usize>().unwrap()),
-                     match str.last().unwrap() {
-                         b'L' => Instruction::L,
-                         b'R' => Instruction::R,
-                         _ => panic!(),
-                     }]
-            }
-        })
-        .collect::<Vec<Instruction>>();
-
-    let faces = vec![
-        Face {
-            id: 0,
-            position: (0, 50),
-            next_up: (5, Direction::R),
-            next_down: (2, Direction::D),
-            next_left: (3, Direction::R),
-            next_right: (1, Direction::R),
-        },
-        Face {
-            id: 1,
-            position: (0, 100),
-            next_up: (5, Direction::U),
-            next_down: (2, Direction::L),
-            next_left: (0, Direction::L),
-            next_right: (4, Direction::L),
-        },
-        Face {
-            id: 2,
-            position: (50, 50),
-            next_up: (0, Direction::U),
-            next_down: (4, Direction::D),
-            next_left: (3, Direction::D),
-            next_right: (1, Direction::U),
-        },
-        Face {
-            id: 3,
-            position: (100, 0),
-            next_up: (2, Direction::R),
-            next_down: (5, Direction::D),
-            next_left: (0, Direction::R),
-            next_right: (4, Direction::R),
-        },
-        Face {
-            id: 4,
-            position: (100, 50),
-            next_up: (2, Direction::U),
-            next_down: (5, Direction::L),
-            next_left: (3, Direction::L),
-            next_right: (1, Direction::L),
-        },
-        Face {
-            id: 5,
-            position: (150, 0),
-            next_up: (3, Direction::U),
-            next_down: (1, Direction::D),
-            next_left: (0, Direction::D),
-            next_right: (4, Direction::U),
-        },
-    ];
-
-    let row_size = input.iter().take_while(|byte| **byte != b'\n').count();
-
-    let grid: Grid = Grid {
-        cells: input
-            .split(|byte| *byte == b'\n')
-            .filter(|line| line.len() <= row_size && !line.is_empty())
-            .map(|line| line.iter().map(|byte| match byte {
-                b' ' => Cell::Outside,
-                b'.' => Cell::Open,
-                b'#' => Cell::Wall,
-                _ => panic!(),
-            }).collect::<Vec<Cell>>())
-            .map(|mut row| {
-                for _ in 0..row_size - row.len() {
-                    row.push(Cell::Outside);
-                };
-                row
-            })
-            .collect()
-    };
+fn solution(input: &[u8], faces: &[Face]) -> usize {
+    let instructions = parse_instructions(input);
+    let grid = Grid::parse(input);
 
     let mut face: &Face = &faces[0];
     let mut row: usize = 0;
@@ -322,14 +359,16 @@ fn part2(input: &[u8]) -> usize {
     for instruction in instructions {
         if let Instruction::Fwd(v) = instruction {
             for _ in 0..v {
-                let (no_wall, next_face_id, next_direction, next_row, next_col) = grid.fwd_3d(&dir, face, row, col);
-                if !no_wall {
+                if let AfterStep::Proceed(next_face_id, next_direction, next_row, next_col) =
+                    grid.fwd(faces, &dir, face, row, col)
+                {
+                    face = &faces[next_face_id];
+                    dir = next_direction;
+                    row = next_row;
+                    col = next_col;
+                } else {
                     break;
                 }
-                face = &faces[next_face_id];
-                dir = next_direction;
-                row = next_row;
-                col = next_col;
             }
         } else {
             dir = dir.turn(&instruction)
@@ -339,7 +378,53 @@ fn part2(input: &[u8]) -> usize {
     (face.position.0 + row + 1) * 1000 + 4 * (face.position.1 + col + 1) + dir.score()
 }
 
+fn part1(input: &[u8]) -> usize {
+    solution(input, &FACES_2D)
+}
+
+fn part2(input: &[u8]) -> usize {
+    solution(input, &FACES_3D)
+}
+
 fn main() {
     println!("{}", part1(INPUT));
     println!("{}", part2(INPUT));
+}
+
+#[cfg(test)]
+mod tests {
+    extern crate test;
+
+    use super::*;
+    use test::Bencher;
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1(INPUT), 67390)
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(INPUT), 95291)
+    }
+
+    #[bench]
+    fn bench_parse_grid(b: &mut Bencher) {
+        b.iter(|| Grid::parse(INPUT))
+    }
+
+    #[bench]
+    fn bench_parse_instructions(b: &mut Bencher) {
+        b.iter(|| parse_instructions(INPUT))
+    }
+
+    #[bench]
+    fn bench_part1(b: &mut Bencher) {
+        b.iter(|| part1(INPUT))
+    }
+
+    #[bench]
+    fn bench_part2(b: &mut Bencher) {
+        b.iter(|| part2(INPUT))
+    }
 }
