@@ -2,7 +2,8 @@
 #![feature(test)]
 extern crate test;
 
-use std::collections::{HashSet, VecDeque};
+use std::cmp::{Ordering, Reverse};
+use std::collections::{BinaryHeap, HashSet};
 
 const INPUT: &[u8] = include_bytes!("input.txt");
 // const INPUT: &[u8] = include_bytes!("input_test.txt");
@@ -21,6 +22,24 @@ struct Grid {
 struct Position {
     row: isize,
     col: isize,
+}
+
+impl Position {
+    fn dist(&self, other: &Self) -> usize {
+        self.row.abs_diff(other.row) + self.col.abs_diff(other.col)
+    }
+}
+
+impl Ord for Position {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.row.cmp(&other.row).then(self.col.cmp(&other.col))
+    }
+}
+
+impl PartialOrd for Position {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Grid {
@@ -121,12 +140,32 @@ struct State {
     position: Position,
 }
 
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.depth
+            .cmp(&other.depth)
+            .then(self.position.cmp(&other.position))
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 fn bfs(grid: &Grid, initial_state: &State, target_pos: &Position) -> State {
-    let mut queue: VecDeque<State> = VecDeque::from([*initial_state]);
-    let mut visited: HashSet<State> = HashSet::from([*initial_state]);
+    let mut queue: BinaryHeap<Reverse<(usize, State)>> = BinaryHeap::new();
+    let mut visited: HashSet<State> = HashSet::new();
+
+    queue.push(Reverse((
+        initial_state.position.dist(target_pos),
+        *initial_state,
+    )));
+    visited.insert(*initial_state);
 
     loop {
-        if let Some(state) = queue.pop_front() {
+        if let Some(Reverse((_, state))) = queue.pop() {
             if &state.position == target_pos {
                 break state;
             }
@@ -167,15 +206,16 @@ fn bfs(grid: &Grid, initial_state: &State, target_pos: &Position) -> State {
             ]
             .into_iter()
             .filter(|state| {
-                grid.in_bounds(&state.position)
-                    && !visited.contains(state)
-                    && grid.is_allowed(&state.position, state.depth)
+                grid.in_bounds(&state.position) && grid.is_allowed(&state.position, state.depth)
             })
             .collect();
 
             for next_state in next_states {
-                queue.push_back(next_state);
-                visited.insert(next_state);
+                if !visited.contains(&next_state) {
+                    let heuristic = next_state.depth + next_state.position.dist(target_pos);
+                    visited.insert(next_state);
+                    queue.push(Reverse((heuristic, next_state)));
+                }
             }
         } else {
             panic!()
@@ -216,11 +256,11 @@ fn part2(input: &[u8]) -> usize {
         position: begin_pos,
     };
 
-    let tmp_state_1 = bfs(&grid, &initial_state, &end_pos);
-    let tmp_state_2 = bfs(&grid, &tmp_state_1, &begin_pos);
-    let final_state = bfs(&grid, &tmp_state_2, &end_pos);
+    let there = bfs(&grid, &initial_state, &end_pos);
+    let and_back_again = bfs(&grid, &there, &begin_pos);
+    let and_there_again = bfs(&grid, &and_back_again, &end_pos);
 
-    final_state.depth
+    and_there_again.depth
 }
 
 fn main() {
