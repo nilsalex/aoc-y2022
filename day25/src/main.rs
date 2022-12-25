@@ -4,57 +4,60 @@ extern crate test;
 
 const INPUT: &[u8] = include_bytes!("input.txt");
 
-fn from_snafu(snafu: &[u8]) -> isize {
-    snafu
-        .iter()
-        .rev()
-        .map(|c| match c {
-            b'2' => 2_isize,
-            b'1' => 1_isize,
-            b'0' => 0_isize,
-            b'-' => -1_isize,
-            b'=' => -2_isize,
-            _ => panic!(),
-        })
-        .enumerate()
-        .fold(0_isize, |acc, (i, x)| acc + 5_isize.pow(i as u32) * x)
+const SNAFU_DIGIT_ARRAY: [isize; 62] = build_snafu_digit_array();
+const INVERTED_SNAFU_DIGIT_ARRAY: [u8; 5] = *b"=-012";
+
+const fn build_snafu_digit_array() -> [isize; 62] {
+    let mut array = [0; 62];
+
+    array[b'2' as usize] = 2_isize;
+    array[b'1' as usize] = 1_isize;
+    array[b'0' as usize] = 0_isize;
+    array[b'-' as usize] = -1_isize;
+    array[b'=' as usize] = -2_isize;
+
+    array
 }
 
-fn to_snafu(x: isize) -> Vec<u8> {
-    let mut x = x;
-    let mut digits: Vec<u8> = Vec::new();
+const fn from_snafu(snafu: &[u8]) -> isize {
+    let mut index: usize = 0;
+    let mut result: isize = 0;
 
-    while x != 0 {
-        let modulus = match x.rem_euclid(5) {
+    while index < snafu.len() {
+        result *= 5;
+        result += SNAFU_DIGIT_ARRAY[snafu[index] as usize];
+        index += 1
+    }
+
+    result
+}
+
+const fn to_snafu(decimal: isize) -> [u8; 26] {
+    let mut snafu = [b'0'; 26];
+    let mut index = 25;
+    let mut decimal = decimal;
+
+    while decimal != 0 {
+        let modulus = match decimal % 5 {
             m @ 3..=4 => m - 5,
             m => m,
         };
-        let digit = match modulus {
-            -2 => b'=',
-            -1 => b'-',
-            0 => b'0',
-            1 => b'1',
-            2 => b'2',
-            _ => panic!(),
-        };
-        digits.push(digit);
-        x -= modulus;
-        x /= 5;
+        snafu[index] = INVERTED_SNAFU_DIGIT_ARRAY[(modulus + 2) as usize];
+        decimal -= modulus;
+        decimal /= 5;
+        index -= 1;
     }
 
-    digits.reverse();
-
-    digits
+    snafu
 }
 
-fn part1(input: &[u8]) -> Vec<u8> {
-    let sum = input
-        .trim_ascii_end()
-        .split(|byte| *byte == b'\n')
-        .map(from_snafu)
-        .sum();
-
-    to_snafu(sum)
+fn part1(input: &[u8]) -> [u8; 26] {
+    to_snafu(
+        input
+            .split(|byte| *byte == b'\n')
+            .map(from_snafu)
+            .sum::<isize>(),
+    )
 }
 
 fn main() {
@@ -70,7 +73,22 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(&part1(INPUT), b"2-121-=10=200==2==21")
+        assert_eq!(part1(INPUT), *b"0000002-121-=10=200==2==21")
+    }
+
+    #[bench]
+    fn bench_to_snafu(b: &mut Bencher) {
+        b.iter(|| to_snafu(123456789))
+    }
+
+    #[bench]
+    fn bench_sum(b: &mut Bencher) {
+        b.iter(|| {
+            INPUT
+                .split(|byte| *byte == b'\n')
+                .map(from_snafu)
+                .sum::<isize>();
+        })
     }
 
     #[bench]
