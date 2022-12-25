@@ -10,9 +10,9 @@ then
   exit 1
 fi
 
-if [[ ! "${1}" =~ ^([1-9]|1[0-9]|2[0-4])$ ]];
+if [[ ! "${1}" =~ ^([1-9]|1[0-9]|2[0-5])$ ]];
 then
-  echo "Argument must be a number from 1 to 24."
+  echo "Argument must be a number from 1 to 25."
   exit 1
 fi
 
