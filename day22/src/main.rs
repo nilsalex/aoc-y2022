@@ -287,7 +287,9 @@ impl Grid {
     }
 
     fn parse(input: &[u8]) -> Self {
-        let mut grid = Grid { cells: [Cell::Open; NUM_FACES * CUBE_SIZE * CUBE_SIZE] };
+        let mut grid = Grid {
+            cells: [Cell::Open; NUM_FACES * CUBE_SIZE * CUBE_SIZE],
+        };
 
         let mut lines_it = input.split(|byte| *byte == b'\n');
 
@@ -383,9 +385,9 @@ fn solution(input: &[u8], faces: &[Face]) -> usize {
     let instructions = parse_instructions(input);
     let grid = Grid::parse(input);
 
-    let (face, dir, row, col) = instructions
-        .iter()
-        .fold((&faces[0], Direction::R, 0_usize, 0_usize), |(face, dir, row, col), instruction|
+    let (face, dir, row, col) = instructions.iter().fold(
+        (&faces[0], Direction::R, 0_usize, 0_usize),
+        |(face, dir, row, col), instruction| {
             if let Instruction::Fwd(v) = instruction {
                 let (mut face, mut dir, mut row, mut col) = (face, dir, row, col);
 
@@ -405,8 +407,9 @@ fn solution(input: &[u8], faces: &[Face]) -> usize {
                 (face, dir, row, col)
             } else {
                 (face, dir.turn(instruction), row, col)
-            },
-        );
+            }
+        },
+    );
 
     (face.position.0 + row + 1) * 1000 + 4 * (face.position.1 + col + 1) + dir.score()
 }
