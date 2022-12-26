@@ -44,9 +44,9 @@ fn part1(input: &str) -> usize {
             cur_dir.push(String::from(&line[5..]));
             let cur_dir_name = dir_name(&cur_dir);
             all_dirs.push(cur_dir_name)
-        } else if line.starts_with("dir ") {
+        } else if let Some(stripped) = line.strip_prefix("dir ") {
             let cur_dir_name = dir_name(&cur_dir);
-            cur_dir.push(String::from(&line[4..]));
+            cur_dir.push(String::from(stripped));
             let new_dir_name = dir_name(&cur_dir);
             cur_dir.pop();
             if let Some(list) = dir_map.get_mut(&cur_dir_name) {
@@ -87,13 +87,13 @@ fn part2(input: &str) -> usize {
     for line in input.lines() {
         if line == "$ cd .." {
             cur_dir.pop();
-        } else if line.starts_with("$ cd") {
-            cur_dir.push(String::from(&line[5..]));
+        } else if let Some(stripped) = line.strip_prefix("$ cd") {
+            cur_dir.push(String::from(stripped));
             let cur_dir_name = dir_name(&cur_dir);
             all_dirs.push(cur_dir_name)
-        } else if line.starts_with("dir ") {
+        } else if let Some(stripped) = line.strip_prefix("dir ") {
             let cur_dir_name = dir_name(&cur_dir);
-            cur_dir.push(String::from(&line[4..]));
+            cur_dir.push(String::from(stripped));
             let new_dir_name = dir_name(&cur_dir);
             cur_dir.pop();
             if let Some(list) = dir_map.get_mut(&cur_dir_name) {

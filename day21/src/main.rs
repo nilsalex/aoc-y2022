@@ -96,14 +96,14 @@ impl Monkey {
     }
 }
 
-fn parse_monkeys(
-    input: &str,
-) -> (
-    Vec<Monkey>,
-    HashMap<String, i64>,
-    HashMap<String, usize>,
-    Vec<String>,
-) {
+struct ParseMonkeyResult {
+    monkeys: Vec<Monkey>,
+    monkey_values: HashMap<String, i64>,
+    monkey_positions: HashMap<String, usize>,
+    unsolved_monkeys: Vec<String>,
+}
+
+fn parse_monkeys(input: &str) -> ParseMonkeyResult {
     let mut monkeys: Vec<Monkey> = Vec::new();
     let mut monkey_values: HashMap<String, i64> = HashMap::new();
     let mut monkey_positions: HashMap<String, usize> = HashMap::new();
@@ -132,11 +132,21 @@ fn parse_monkeys(
         };
     }
 
-    (monkeys, monkey_values, monkey_positions, unsolved_monkeys)
+    ParseMonkeyResult {
+        monkeys,
+        monkey_values,
+        monkey_positions,
+        unsolved_monkeys,
+    }
 }
 
 fn part1(input: &str) -> i64 {
-    let (monkeys, mut monkey_values, monkey_positions, mut unsolved_monkeys) = parse_monkeys(input);
+    let ParseMonkeyResult {
+        monkeys,
+        mut monkey_values,
+        monkey_positions,
+        mut unsolved_monkeys,
+    } = parse_monkeys(input);
 
     while !monkey_values.contains_key("root") {
         let mut new_unsolved_monkeys = Vec::new();
@@ -158,7 +168,12 @@ fn part1(input: &str) -> i64 {
 }
 
 fn part2(input: &str) -> i64 {
-    let (monkeys, mut monkey_values, monkey_positions, mut unsolved_monkeys) = parse_monkeys(input);
+    let ParseMonkeyResult {
+        monkeys,
+        mut monkey_values,
+        monkey_positions,
+        mut unsolved_monkeys,
+    } = parse_monkeys(input);
 
     monkey_values.remove("humn");
 

@@ -32,14 +32,14 @@ fn part1(input: &[u8]) -> isize {
             |(cycle, register, signal), instruction| {
                 let (mut new_cycle, mut new_signal) = (cycle, signal);
                 if (new_cycle + 20) % 40 == 0 {
-                    new_signal += (new_cycle as isize) * register;
+                    new_signal += new_cycle * register;
                 }
                 new_cycle += 1;
                 if instruction[0] == b'n' {
                     (new_cycle, register, new_signal)
                 } else {
                     if (new_cycle + 20) % 40 == 0 {
-                        new_signal += (new_cycle as isize) * register;
+                        new_signal += new_cycle * register;
                     }
                     (
                         new_cycle + 1,
