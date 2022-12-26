@@ -123,7 +123,6 @@ fn part2(input: &[u8]) -> usize {
                 }
             }
 
-            // println!("score of {}, {}; {}", i, j, score);
             result = max(result, score)
         }
     }

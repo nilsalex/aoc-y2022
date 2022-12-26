@@ -291,13 +291,6 @@ fn next_extended_states(state: &ExtendedState, graph: &FullyConnectedGraph) -> V
         );
     }
 
-    if state.depth < 3 {
-        for _ in 0..state.depth {
-            print!(" ")
-        }
-        println!("depth {}: {} branches", state.depth, next_states.len())
-    }
-
     next_states
 }
 

@@ -69,7 +69,6 @@ fn part1(input: &str) -> usize {
     let mut result: usize = 0;
 
     while x <= right {
-        println!("{}", x);
         if let Some(sensor) = sensors.iter().find(|sensor| sensor.contains(x, row)) {
             let vertical_dist = (sensor.position.1 - row).abs();
             let remaining_dist = sensor.nearest_beacon_distance - vertical_dist;

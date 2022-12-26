@@ -67,7 +67,6 @@ fn find_closing(bytes: &[u8]) -> usize {
             _ => {}
         }
     }
-    println!("{}", std::str::from_utf8(bytes).unwrap());
     panic!();
 }
 
