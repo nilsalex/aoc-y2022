@@ -2,8 +2,7 @@
 #![feature(test)]
 extern crate test;
 
-use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap, VecDeque};
+use std::collections::VecDeque;
 
 const INPUT: &[u8] = include_bytes!("input.txt");
 
@@ -13,25 +12,10 @@ enum Direction {
     Down,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone)]
 struct State {
     cost: usize,
     position: (usize, usize),
-}
-
-impl Ord for State {
-    fn cmp(&self, other: &Self) -> Ordering {
-        other
-            .cost
-            .cmp(&self.cost)
-            .then_with(|| self.position.cmp(&other.position))
-    }
-}
-
-impl PartialOrd for State {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
 }
 
 fn solve(input: &[u8], start: u8, end: u8, direction: Direction) -> usize {
@@ -54,25 +38,27 @@ fn solve(input: &[u8], start: u8, end: u8, direction: Direction) -> usize {
 
     let mut visited: Vec<bool> = vec![false; x_size * y_size];
     let mut queue: VecDeque<State> = VecDeque::new();
-    visited[y0 * x_size + x0];
-    queue.push_back(State { cost: 0, position: (x0, y0) });
+    visited[y0 * x_size + x0] = true;
+    queue.push_back(State {
+        cost: 0,
+        position: (x0, y0),
+    });
 
     while let Some(State { cost, position }) = queue.pop_front() {
         if grid[position.1][position.0] == end {
             return cost;
         }
-        if visited[position.1 * x_size + position.0] {
-            continue;
-        }
         for (next_x, next_y) in next_cells(position.0, position.1, x_size, y_size, direction, &grid)
         {
+            if visited[next_y * x_size + next_x] {
+                continue;
+            }
             let next = State {
                 cost: cost + 1,
                 position: (next_x, next_y),
             };
             queue.push_back(next);
-            visited[]
-            dist.insert(next.position, next.cost);
+            visited[next_y * x_size + next_x] = true;
         }
     }
 
