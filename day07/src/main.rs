@@ -31,45 +31,59 @@ fn dir_name(vec: &[String]) -> String {
     result
 }
 
-fn part1(input: &str) -> usize {
-    let mut size_map: HashMap<String, usize> = HashMap::new();
-    let mut dir_map: HashMap<String, Vec<String>> = HashMap::new();
-    let mut cur_dir: Vec<String> = Vec::new();
-    let mut all_dirs: Vec<String> = Vec::new();
+struct DirectoryTree {
+    all_dirs: Vec<String>,
+    dir_map: HashMap<String, Vec<String>>,
+    size_map: HashMap<String, usize>,
+}
 
-    for line in input.lines() {
-        if line == "$ cd .." {
-            cur_dir.pop();
-        } else if line.starts_with("$ cd") {
-            cur_dir.push(String::from(&line[5..]));
-            let cur_dir_name = dir_name(&cur_dir);
-            all_dirs.push(cur_dir_name)
-        } else if let Some(stripped) = line.strip_prefix("dir ") {
-            let cur_dir_name = dir_name(&cur_dir);
-            cur_dir.push(String::from(stripped));
-            let new_dir_name = dir_name(&cur_dir);
-            cur_dir.pop();
-            if let Some(list) = dir_map.get_mut(&cur_dir_name) {
-                list.push(new_dir_name);
-            } else {
-                dir_map.insert(cur_dir_name, vec![new_dir_name]);
-            }
-        } else if line.as_bytes()[0].is_ascii_digit() {
-            let space_pos = line.find(' ').unwrap();
-            let cur_dir_name = dir_name(&cur_dir);
-            let size = &line[0..space_pos].parse::<usize>().unwrap();
-            if let Some(total_size) = size_map.get_mut(&cur_dir_name) {
-                *total_size += *size;
-            } else {
-                size_map.insert(cur_dir_name, *size);
+impl DirectoryTree {
+    fn parse(input: &str) -> Self {
+        let mut size_map: HashMap<String, usize> = HashMap::new();
+        let mut dir_map: HashMap<String, Vec<String>> = HashMap::new();
+        let mut cur_dir: Vec<String> = Vec::new();
+        let mut all_dirs: Vec<String> = Vec::new();
+
+        for line in input.lines() {
+            if line == "$ cd .." {
+                cur_dir.pop();
+            } else if let Some(stripped) = line.strip_prefix("$ cd ") {
+                cur_dir.push(String::from(stripped));
+                let cur_dir_name = dir_name(&cur_dir);
+                all_dirs.push(cur_dir_name)
+            } else if let Some(stripped) = line.strip_prefix("dir ") {
+                let cur_dir_name = dir_name(&cur_dir);
+                cur_dir.push(String::from(stripped));
+                let new_dir_name = dir_name(&cur_dir);
+                cur_dir.pop();
+                if let Some(list) = dir_map.get_mut(&cur_dir_name) {
+                    list.push(new_dir_name);
+                } else {
+                    dir_map.insert(cur_dir_name, vec![new_dir_name]);
+                }
+            } else if line.as_bytes()[0].is_ascii_digit() {
+                let space_pos = line.find(' ').unwrap();
+                let cur_dir_name = dir_name(&cur_dir);
+                let size = &line[0..space_pos].parse::<usize>().unwrap();
+                if let Some(total_size) = size_map.get_mut(&cur_dir_name) {
+                    *total_size += *size;
+                } else {
+                    size_map.insert(cur_dir_name, *size);
+                }
             }
         }
+
+        Self { all_dirs, dir_map, size_map }
     }
+}
+
+fn part1(input: &str) -> usize {
+    let directory_tree = DirectoryTree::parse(input);
 
     let mut result = 0;
 
-    for dir in all_dirs {
-        let size = total_size(&dir, &size_map, &dir_map);
+    for dir in directory_tree.all_dirs {
+        let size = total_size(&dir, &directory_tree.size_map, &directory_tree.dir_map);
         if size <= 100000 {
             result += size;
         }
@@ -79,47 +93,15 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    let mut size_map: HashMap<String, usize> = HashMap::new();
-    let mut dir_map: HashMap<String, Vec<String>> = HashMap::new();
-    let mut cur_dir: Vec<String> = Vec::new();
-    let mut all_dirs: Vec<String> = Vec::new();
+    let directory_tree = DirectoryTree::parse(input);
 
-    for line in input.lines() {
-        if line == "$ cd .." {
-            cur_dir.pop();
-        } else if let Some(stripped) = line.strip_prefix("$ cd") {
-            cur_dir.push(String::from(stripped));
-            let cur_dir_name = dir_name(&cur_dir);
-            all_dirs.push(cur_dir_name)
-        } else if let Some(stripped) = line.strip_prefix("dir ") {
-            let cur_dir_name = dir_name(&cur_dir);
-            cur_dir.push(String::from(stripped));
-            let new_dir_name = dir_name(&cur_dir);
-            cur_dir.pop();
-            if let Some(list) = dir_map.get_mut(&cur_dir_name) {
-                list.push(new_dir_name);
-            } else {
-                dir_map.insert(cur_dir_name, vec![new_dir_name]);
-            }
-        } else if line.as_bytes()[0].is_ascii_digit() {
-            let space_pos = line.find(' ').unwrap();
-            let cur_dir_name = dir_name(&cur_dir);
-            let size = &line[0..space_pos].parse::<usize>().unwrap();
-            if let Some(total_size) = size_map.get_mut(&cur_dir_name) {
-                *total_size += *size;
-            } else {
-                size_map.insert(cur_dir_name, *size);
-            }
-        }
-    }
-
-    let free_space = 70000000 - total_size("/", &size_map, &dir_map) as isize;
+    let free_space = 70000000 - total_size("/", &directory_tree.size_map, &directory_tree.dir_map) as isize;
     let to_free = 30000000 - free_space;
 
-    all_dirs
+    directory_tree.all_dirs
         .iter()
         .map(|dir| {
-            let dir_size = total_size(dir, &size_map, &dir_map) as isize;
+            let dir_size = total_size(dir, &directory_tree.size_map, &directory_tree.dir_map) as isize;
             (dir_size - to_free, dir_size)
         })
         .filter(|(diff, _)| *diff >= 0)
