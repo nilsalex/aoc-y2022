@@ -2,6 +2,7 @@
 extern crate test;
 
 use std::cmp::max;
+use std::collections::{HashSet, VecDeque};
 
 const INPUT: &str = include_str!("input.txt");
 
@@ -20,9 +21,7 @@ struct Grid {
 
 impl Grid {
     fn get(&self, x: usize, y: usize) -> Cell {
-        if x >= self.x_size {
-            Cell::Air
-        } else if y >= self.y_size {
+        if x >= self.x_size || y >= self.y_size {
             Cell::Air
         } else {
             self.cells[y * self.x_size + x]
@@ -33,7 +32,7 @@ impl Grid {
         self.cells[y * self.x_size + x] = cell
     }
 
-    fn from_lines(lines: &Vec<Line>, add_bottom: bool) -> Self {
+    fn from_lines(lines: &Vec<Line>) -> Self {
         let (x_max, y_max) = lines.iter().fold((0, 0), |(x_max, y_max), line| {
             (
                 max(max(x_max, line.start.0), line.end.0),
@@ -41,11 +40,7 @@ impl Grid {
             )
         });
         let x_size = 2 * (x_max + 1) as usize;
-        let y_size = if add_bottom {
-            (y_max + 1) as usize
-        } else {
-            (y_max + 3) as usize
-        };
+        let y_size = (y_max + 1) as usize;
 
         let mut cells = vec![Cell::Air; x_size * y_size];
 
@@ -65,12 +60,6 @@ impl Grid {
                     (line.start.1 + dy_ * i) as usize,
                 );
                 cells[y * x_size + x] = Cell::Rock;
-            }
-        }
-
-        if add_bottom {
-            for x in 0..x_size {
-                cells[(y_size - 1) * x_size + x] = Cell::Rock
             }
         }
 
@@ -101,7 +90,7 @@ fn parse_lines(input: &str) -> Vec<Line> {
     for line in input.lines() {
         let mut nodes_it = line.split(" -> ");
         let mut current_node = nodes_it.next().unwrap();
-        while let Some(next_node) = nodes_it.next() {
+        for next_node in nodes_it {
             lines.push(Line {
                 start: parse_node(current_node),
                 end: parse_node(next_node),
@@ -111,6 +100,13 @@ fn parse_lines(input: &str) -> Vec<Line> {
     }
 
     lines
+}
+
+fn next_all(sx: usize, sy: usize, grid: &Grid) -> Vec<(usize, usize)> {
+    [(sx, sy + 1), (sx - 1, sy + 1), (sx + 1, sy + 1)]
+        .into_iter()
+        .filter(|(x, y)| grid.get(*x, *y) == Cell::Air)
+        .collect()
 }
 
 fn next(sx: usize, sy: usize, grid: &Grid) -> Option<(usize, usize)> {
@@ -127,7 +123,7 @@ fn next(sx: usize, sy: usize, grid: &Grid) -> Option<(usize, usize)> {
 
 fn part1(input: &str) -> usize {
     let lines = parse_lines(input);
-    let mut grid = Grid::from_lines(&lines, false);
+    let mut grid = Grid::from_lines(&lines);
 
     let mut result = 0;
 
@@ -150,22 +146,26 @@ fn part1(input: &str) -> usize {
 
 fn part2(input: &str) -> usize {
     let lines = parse_lines(input);
-    let mut grid = Grid::from_lines(&lines, false);
+    let grid = Grid::from_lines(&lines);
 
-    let mut result = 0;
+    let mut queue: VecDeque<(usize, usize)> = VecDeque::new();
+    let mut visited: HashSet<(usize, usize)> = HashSet::new();
+    let mut result = 1;
 
-    loop {
-        let (mut sx, mut sy) = (500, 0);
+    queue.push_back((500, 0));
+    visited.insert((500, 0));
 
-        while let Some((sx_, sy_)) = next(sx, sy, &grid) {
-            (sx, sy) = (sx_, sy_);
-        }
-
-        grid.set(sx, sy, Cell::Sand);
-        result += 1;
-
-        if sy == 0 && sx == 500 {
-            break;
+    while let Some((x, y)) = queue.pop_front() {
+        for (next_x, next_y) in next_all(x, y, &grid) {
+            if y + 1 > grid.y_size {
+                continue;
+            }
+            if visited.contains(&(next_x, next_y)) {
+                continue;
+            }
+            queue.push_back((next_x, next_y));
+            visited.insert((next_x, next_y));
+            result += 1;
         }
     }
 
@@ -202,13 +202,7 @@ mod tests {
     #[bench]
     fn bench_grid(b: &mut Bencher) {
         let lines = parse_lines(INPUT);
-        b.iter(|| Grid::from_lines(&lines, false))
-    }
-
-    #[bench]
-    fn bench_grid_with_bottom(b: &mut Bencher) {
-        let lines = parse_lines(INPUT);
-        b.iter(|| Grid::from_lines(&lines, true))
+        b.iter(|| Grid::from_lines(&lines))
     }
 
     #[bench]
