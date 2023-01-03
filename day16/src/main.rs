@@ -4,7 +4,7 @@ extern crate test;
 
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap, HashSet};
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 
 const INPUT: &[u8] = include_bytes!("input.txt");
 // const INPUT: &[u8] = include_bytes!("input_test.txt");
@@ -34,31 +34,24 @@ impl PackedValves {
 struct StateV2 {
     cumulative_flow: usize,
     opened: PackedValves,
-    pos: u8,
-    time: u8,
-}
-
-impl Debug for StateV2 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "State {{ pos: {}, time: {}, flow: {}, opened: {:016b} }}",
-            self.pos, self.time, self.cumulative_flow, self.opened.0
-        )
-    }
+    positions: [u8; 2],
+    times: [u8; 2],
 }
 
 impl StateV2 {
     fn apply_heuristics(&self, heuristics: &[Vec<BestValvesHeuristics>]) -> usize {
-        let mut time = self.time;
+        let mut times = self.times;
         let mut opened = self.opened;
         let mut upper_bound = self.cumulative_flow;
 
         'next_valve: loop {
-            for heuristics in &heuristics[time as usize] {
+            for heuristics in &heuristics[times[0] as usize] {
                 if !opened.is_set(heuristics.valve) {
-                    time -= heuristics.dist;
-                    upper_bound += heuristics.flow as usize * time as usize;
+                    times[0] -= heuristics.dist;
+                    upper_bound += heuristics.flow as usize * times[0] as usize;
+                    if times[0] < times[1] {
+                        times.swap(0, 1)
+                    }
                     opened = opened.set(heuristics.valve);
                     continue 'next_valve;
                 }
@@ -130,12 +123,12 @@ impl FullyConnectedGraph {
     fn best_valves_heuristics(&self, max_time: usize) -> Vec<Vec<BestValvesHeuristics>> {
         (0..=max_time)
             .map(|time| {
-                let mut best_for_time: Vec<BestValvesHeuristics> = (1..self.num_vertices)
+                let mut best_for_time: Vec<BestValvesHeuristics> = (0..self.num_vertices)
                     .flat_map(|valve| {
-                        let dists = (0..self.num_vertices)
+                        let dists = (1..self.num_vertices)
                             .filter(|next_valve| *next_valve != valve)
                             .map(|next_valve| {
-                                self.weights[next_valve * self.num_vertices + valve] + 1
+                                self.get_weight(next_valve, valve) + 1
                             });
                         let min_dist = dists.min().unwrap();
                         (time as u8 > min_dist).then_some(BestValvesHeuristics {
@@ -239,21 +232,14 @@ impl InitialGraph {
     }
 }
 
-fn max_cumulative_flow(graph: &FullyConnectedGraph) -> usize {
+fn max_cumulative_flow(graph: &FullyConnectedGraph, initial_state: &StateV2) -> usize {
     let heuristics = graph.best_valves_heuristics(30);
-
-    let initial_state = StateV2 {
-        cumulative_flow: 0,
-        opened: PackedValves::new().set(0),
-        pos: 0,
-        time: 30,
-    };
 
     let mut visited: HashSet<StateV2> = HashSet::new();
     let mut queue: BinaryHeap<(usize, StateV2)> = BinaryHeap::new();
     let mut best = 0;
 
-    queue.push((usize::MAX, initial_state));
+    queue.push((usize::MAX, initial_state.clone()));
 
     while let Some((upper, state)) = queue.pop() {
         if upper <= best {
@@ -267,18 +253,22 @@ fn max_cumulative_flow(graph: &FullyConnectedGraph) -> usize {
             continue;
         }
 
-        for (next, flow) in graph.values.iter().enumerate() {
-            let dist = graph.get_weight(state.pos as usize, next);
+        for (next, flow) in graph.values.iter().enumerate().skip(1) {
+            let dist = graph.get_weight(state.positions[0] as usize, next);
             let next = next as u8;
 
-            if state.time > dist && !state.opened.is_set(next) {
-                let next_time = state.time - dist - 1;
-                let next_state = StateV2 {
+            if state.times[0] > dist + 1 && !state.opened.is_set(next) {
+                let next_time = state.times[0] - dist - 1;
+                let mut next_state = StateV2 {
                     cumulative_flow: state.cumulative_flow + *flow as usize * next_time as usize,
                     opened: state.opened.set(next),
-                    pos: next,
-                    time: next_time,
+                    positions: [next, state.positions[1]],
+                    times: [next_time, state.times[1]],
                 };
+                if next_state.times[0] < next_state.times[1] {
+                    next_state.positions.swap(0, 1);
+                    next_state.times.swap(0, 1)
+                }
                 best = best.max(next_state.cumulative_flow);
                 let upper = next_state.apply_heuristics(&heuristics);
                 if upper > best {
@@ -295,14 +285,28 @@ fn part1(input: &[u8]) -> usize {
     let initial_graph = InitialGraph::parse(input);
     let graph = FullyConnectedGraph::from_initial_graph(&initial_graph);
 
-    max_cumulative_flow(&graph)
+    let initial_state = StateV2 {
+        cumulative_flow: 0,
+        opened: PackedValves::new().set(0),
+        positions: [0, 0],
+        times: [30, 0],
+    };
+
+    max_cumulative_flow(&graph, &initial_state)
 }
 
 fn part2(input: &[u8]) -> usize {
     let initial_graph = InitialGraph::parse(input);
     let graph = FullyConnectedGraph::from_initial_graph(&initial_graph);
 
-    max_cumulative_flow(&graph)
+    let initial_state = StateV2 {
+        cumulative_flow: 0,
+        opened: PackedValves::new().set(0),
+        positions: [0, 0],
+        times: [26, 26],
+    };
+
+    max_cumulative_flow(&graph, &initial_state)
 }
 
 fn main() {
