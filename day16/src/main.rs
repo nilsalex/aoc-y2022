@@ -127,9 +127,7 @@ impl FullyConnectedGraph {
                     .flat_map(|valve| {
                         let dists = (1..self.num_vertices)
                             .filter(|next_valve| *next_valve != valve)
-                            .map(|next_valve| {
-                                self.get_weight(next_valve, valve) + 1
-                            });
+                            .map(|next_valve| self.get_weight(next_valve, valve) + 1);
                         let min_dist = dists.min().unwrap();
                         (time as u8 > min_dist).then_some(BestValvesHeuristics {
                             valve: valve as u8,
@@ -254,25 +252,49 @@ fn max_cumulative_flow(graph: &FullyConnectedGraph, initial_state: &StateV2) -> 
         }
 
         for (next, flow) in graph.values.iter().enumerate().skip(1) {
-            let dist = graph.get_weight(state.positions[0] as usize, next);
-            let next = next as u8;
+            {
+                let dist = graph.get_weight(state.positions[0] as usize, next);
+                let next = next as u8;
 
-            if state.times[0] > dist + 1 && !state.opened.is_set(next) {
-                let next_time = state.times[0] - dist - 1;
-                let mut next_state = StateV2 {
-                    cumulative_flow: state.cumulative_flow + *flow as usize * next_time as usize,
-                    opened: state.opened.set(next),
-                    positions: [next, state.positions[1]],
-                    times: [next_time, state.times[1]],
-                };
-                if next_state.times[0] < next_state.times[1] {
-                    next_state.positions.swap(0, 1);
-                    next_state.times.swap(0, 1)
+                if state.times[0] > dist + 1 && !state.opened.is_set(next) {
+                    let next_time = state.times[0] - dist - 1;
+                    let mut next_state = StateV2 {
+                        cumulative_flow: state.cumulative_flow
+                            + *flow as usize * next_time as usize,
+                        opened: state.opened.set(next),
+                        positions: [next, state.positions[1]],
+                        times: [next_time, state.times[1]],
+                    };
+                    if next_state.times[0] < next_state.times[1] {
+                        next_state.positions.swap(0, 1);
+                        next_state.times.swap(0, 1)
+                    }
+                    best = best.max(next_state.cumulative_flow);
+                    let upper = next_state.apply_heuristics(&heuristics);
+                    if upper > best {
+                        queue.push((upper, next_state))
+                    }
                 }
-                best = best.max(next_state.cumulative_flow);
-                let upper = next_state.apply_heuristics(&heuristics);
-                if upper > best {
-                    queue.push((upper, next_state))
+            }
+
+            if state.times[0] == state.times[1] {
+                let dist = graph.get_weight(state.positions[1] as usize, next);
+                let next = next as u8;
+
+                if state.times[1] > dist + 1 && !state.opened.is_set(next) {
+                    let next_time = state.times[1] - dist - 1;
+                    let next_state = StateV2 {
+                        cumulative_flow: state.cumulative_flow
+                            + *flow as usize * next_time as usize,
+                        opened: state.opened.set(next),
+                        positions: [state.positions[0], next],
+                        times: [state.times[0], next_time],
+                    };
+                    best = best.max(next_state.cumulative_flow);
+                    let upper = next_state.apply_heuristics(&heuristics);
+                    if upper > best {
+                        queue.push((upper, next_state))
+                    }
                 }
             }
         }
