@@ -188,6 +188,14 @@ impl State {
         }
     }
 
+    fn upper_bound(&self) -> u32 {
+        let t = self.max_depth - self.depth;
+
+        self.inventory.geodes
+            + self.inventory.geode_robots * t
+            + if t == 0 { 0 } else { t * (t - 1) / 2 }
+    }
+
     fn next_states(&self, blueprint: &Blueprint) -> Vec<State> {
         if self.depth == self.max_depth {
             return Vec::new();
@@ -205,18 +213,23 @@ impl State {
             .collect::<Vec<State>>()
     }
 
-    fn dfs(&self, blueprint: &Blueprint) -> u32 {
+    fn dfs(&self, best: u32, blueprint: &Blueprint) -> u32 {
         let next_states = self.next_states(blueprint);
 
         if next_states.is_empty() {
-            self.inventory.geodes
-        } else {
-            next_states
-                .iter()
-                .map(|state| state.dfs(blueprint))
-                .max()
-                .unwrap()
+            return self.inventory.geodes;
         }
+
+        let mut best = best;
+
+        for next_state in next_states {
+            if next_state.upper_bound() > best {
+                let result = next_state.dfs(best, blueprint);
+                best = best.max(result);
+            }
+        }
+
+        best
     }
 }
 
@@ -265,7 +278,7 @@ fn part1(input: &str) -> usize {
     blueprints
         .iter()
         .map(|blueprint: &Blueprint| {
-            blueprint.id as usize * State::new_with_one_ore(24).dfs(blueprint) as usize
+            blueprint.id as usize * State::new_with_one_ore(24).dfs(0, blueprint) as usize
         })
         .sum()
 }
@@ -275,7 +288,7 @@ fn part2(input: &str) -> usize {
 
     blueprints
         .iter()
-        .map(|blueprint: &Blueprint| State::new_with_one_ore(32).dfs(blueprint) as usize)
+        .map(|blueprint: &Blueprint| State::new_with_one_ore(32).dfs(0, blueprint) as usize)
         .product()
 }
 
