@@ -73,7 +73,11 @@ impl DirectoryTree {
             }
         }
 
-        Self { all_dirs, dir_map, size_map }
+        Self {
+            all_dirs,
+            dir_map,
+            size_map,
+        }
     }
 }
 
@@ -95,13 +99,16 @@ fn part1(input: &str) -> usize {
 fn part2(input: &str) -> usize {
     let directory_tree = DirectoryTree::parse(input);
 
-    let free_space = 70000000 - total_size("/", &directory_tree.size_map, &directory_tree.dir_map) as isize;
+    let free_space =
+        70000000 - total_size("/", &directory_tree.size_map, &directory_tree.dir_map) as isize;
     let to_free = 30000000 - free_space;
 
-    directory_tree.all_dirs
+    directory_tree
+        .all_dirs
         .iter()
         .map(|dir| {
-            let dir_size = total_size(dir, &directory_tree.size_map, &directory_tree.dir_map) as isize;
+            let dir_size =
+                total_size(dir, &directory_tree.size_map, &directory_tree.dir_map) as isize;
             (dir_size - to_free, dir_size)
         })
         .filter(|(diff, _)| *diff >= 0)

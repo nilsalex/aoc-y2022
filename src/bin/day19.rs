@@ -132,12 +132,19 @@ impl State {
 
     fn should_build(&self, blueprint: &Blueprint, robot: &Robot) -> bool {
         match robot {
-            Robot::Ore =>
-                self.inventory.ore_robots * (self.max_depth - self.depth - 1) + self.inventory.ore < blueprint.max_costs_ore * (self.max_depth - self.depth - 1),
-            Robot::Clay =>
-                self.inventory.clay_robots * (self.max_depth - self.depth - 1) + self.inventory.clay < blueprint.obsidian_robot_costs_clay * (self.max_depth - self.depth - 1),
-            Robot::Obsidian =>
-                self.inventory.obsidian_robots * (self.max_depth - self.depth - 1) + self.inventory.obsidian < blueprint.geode_robot_costs_obsidian * (self.max_depth - self.depth - 1),
+            Robot::Ore => {
+                self.inventory.ore_robots * (self.max_depth - self.depth - 1) + self.inventory.ore
+                    < blueprint.max_costs_ore * (self.max_depth - self.depth - 1)
+            }
+            Robot::Clay => {
+                self.inventory.clay_robots * (self.max_depth - self.depth - 1) + self.inventory.clay
+                    < blueprint.obsidian_robot_costs_clay * (self.max_depth - self.depth - 1)
+            }
+            Robot::Obsidian => {
+                self.inventory.obsidian_robots * (self.max_depth - self.depth - 1)
+                    + self.inventory.obsidian
+                    < blueprint.geode_robot_costs_obsidian * (self.max_depth - self.depth - 1)
+            }
             Robot::Geode => true,
         }
     }
