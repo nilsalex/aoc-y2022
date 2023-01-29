@@ -1,10 +1,8 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
 use std::cmp::Ordering;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day13.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day13.txt");
 
 #[derive(Eq, PartialEq, Clone, Debug)]
 enum Value {
@@ -98,7 +96,7 @@ fn parse_values(bytes: &[u8]) -> Vec<Value> {
     values
 }
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     let values: Vec<Vec<Value>> = input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
@@ -117,7 +115,7 @@ fn part1(input: &[u8]) -> usize {
     result
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let mut values: Vec<Value> = input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
@@ -135,11 +133,6 @@ fn part2(input: &[u8]) -> usize {
 
     (values.iter().position(|value| *value == divider_1).unwrap() + 1)
         * (values.iter().position(|value| *value == divider_2).unwrap() + 1)
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

@@ -1,10 +1,8 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
 use std::collections::VecDeque;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day12.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day12.txt");
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 enum Direction {
@@ -100,17 +98,12 @@ fn next_cells(
         .collect::<Vec<(usize, usize)>>()
 }
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     solve(input, b'S', b'E', Direction::Up)
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     solve(input, b'E', b'a', Direction::Down)
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

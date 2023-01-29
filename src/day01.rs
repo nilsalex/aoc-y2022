@@ -1,8 +1,6 @@
-#![feature(test)]
-#![feature(byte_slice_trim_ascii)]
 extern crate test;
 
-pub const INPUT: &[u8] = include_bytes!("../../inputs/day01.txt");
+pub const INPUT: &[u8] = include_bytes!("../inputs/day01.txt");
 
 const POWERS_OF_TEN: [u32; 10] = [
     1,
@@ -23,7 +21,7 @@ fn u32_from_bytes(bytes: &[u8]) -> u32 {
     })
 }
 
-fn part1(input: &[u8]) -> u32 {
+pub(crate) fn part1(input: &[u8]) -> u32 {
     input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
@@ -37,7 +35,7 @@ fn part1(input: &[u8]) -> u32 {
         .0
 }
 
-fn part2(input: &[u8]) -> u32 {
+pub(crate) fn part2(input: &[u8]) -> u32 {
     let mut top_three_plus_one = [0_u32; 4];
 
     input
@@ -54,11 +52,6 @@ fn part2(input: &[u8]) -> u32 {
         });
 
     top_three_plus_one.iter().skip(1).sum()
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

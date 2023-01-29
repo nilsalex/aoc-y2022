@@ -1,4 +1,3 @@
-#![feature(test)]
 extern crate test;
 
 const MAX_ITEMS_PER_MONKEY: usize = 32;
@@ -65,17 +64,12 @@ fn solution(rounds: usize, calm_down_factor: usize) -> usize {
     num_inspections[6] * num_inspections[7]
 }
 
-fn part1() -> usize {
+pub(crate) fn part1() -> usize {
     solution(20, 3)
 }
 
-fn part2() -> usize {
+pub(crate) fn part2() -> usize {
     solution(10000, 1)
-}
-
-fn main() {
-    println!("{}", part1());
-    println!("{}", part2());
 }
 
 #[cfg(test)]

@@ -1,8 +1,6 @@
-#![feature(byte_slice_trim_ascii)]
-
 use std::collections::{HashMap, HashSet};
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day23.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day23.txt");
 // const INPUT: &[u8] = include_bytes!("input_test.txt");
 
 const DIRS: [Dir; 4] = [Dir::U, Dir::D, Dir::L, Dir::R];
@@ -146,7 +144,7 @@ fn parse_positions(input: &[u8]) -> HashSet<(isize, isize)> {
         .collect()
 }
 
-fn part1(input: &[u8]) -> isize {
+pub(crate) fn part1(input: &[u8]) -> isize {
     let mut positions = parse_positions(input);
 
     for i in 0..10 {
@@ -162,7 +160,7 @@ fn part1(input: &[u8]) -> isize {
     (row_max - row_min + 1) * (col_max - col_min + 1) - positions.len() as isize
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let mut positions = parse_positions(input);
     let mut round = 0;
 
@@ -176,9 +174,4 @@ fn part2(input: &[u8]) -> usize {
     }
 
     round + 1
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }

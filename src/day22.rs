@@ -1,8 +1,6 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day22.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day22.txt");
 
 const CUBE_SIZE: usize = 50;
 const NUM_FACES: usize = 6;
@@ -414,17 +412,12 @@ fn solution(input: &[u8], faces: &[Face]) -> usize {
     (face.position.0 + row + 1) * 1000 + 4 * (face.position.1 + col + 1) + dir.score()
 }
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     solution(input, &FACES_2D)
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     solution(input, &FACES_3D)
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

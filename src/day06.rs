@@ -1,11 +1,10 @@
-#![feature(test)]
 extern crate test;
 
 use std::collections::HashMap;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day06.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day06.txt");
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     input
         .windows(4)
         .position(|w| {
@@ -20,7 +19,7 @@ fn part1(input: &[u8]) -> usize {
         + 4
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let mut counts: HashMap<u8, u8> = HashMap::new();
 
     for item in &input[0..14] {
@@ -65,11 +64,6 @@ fn part2(input: &[u8]) -> usize {
     }
 
     result
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

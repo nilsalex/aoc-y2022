@@ -1,13 +1,11 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
 use std::cmp::max;
 use std::collections::HashSet;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day08.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day08.txt");
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     let grid: Vec<&[u8]> = input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
@@ -69,7 +67,7 @@ fn part1(input: &[u8]) -> usize {
     visible.len()
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let grid: Vec<&[u8]> = input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
@@ -127,11 +125,6 @@ fn part2(input: &[u8]) -> usize {
     }
 
     result
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

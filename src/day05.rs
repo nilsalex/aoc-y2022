@@ -1,8 +1,6 @@
-#![feature(test)]
-#![feature(byte_slice_trim_ascii)]
 extern crate test;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day05.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day05.txt");
 const POWERS_OF_TEN: [u8; 3] = [1, 10, 100];
 
 fn bytes_to_u8(bytes: &[u8]) -> u8 {
@@ -31,7 +29,7 @@ fn parse_stacks(input: &[u8]) -> Vec<Vec<u8>> {
     stacks
 }
 
-fn part1(input: &[u8]) -> Vec<u8> {
+pub(crate) fn part1(input: &[u8]) -> Vec<u8> {
     let mut stacks: Vec<Vec<u8>> = parse_stacks(input);
 
     for bytes in input.trim_ascii_end().split(|byte| *byte == b'\n').skip(10) {
@@ -54,7 +52,7 @@ fn part1(input: &[u8]) -> Vec<u8> {
     stacks.iter().map(|stack| *stack.last().unwrap()).collect()
 }
 
-fn part2(input: &[u8]) -> Vec<u8> {
+pub(crate) fn part2(input: &[u8]) -> Vec<u8> {
     let mut stacks: Vec<Vec<u8>> = parse_stacks(input);
     let mut temp_stack: Vec<u8> = Vec::new();
 
@@ -80,11 +78,6 @@ fn part2(input: &[u8]) -> Vec<u8> {
     }
 
     stacks.iter().map(|stack| *stack.last().unwrap()).collect()
-}
-
-fn main() {
-    println!("{}", std::str::from_utf8(&part1(INPUT)).unwrap());
-    println!("{}", std::str::from_utf8(&part2(INPUT)).unwrap());
 }
 
 #[cfg(test)]

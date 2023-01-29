@@ -1,10 +1,9 @@
-#![feature(test)]
 extern crate test;
 
 use std::cmp::max;
 use std::collections::{HashSet, VecDeque};
 
-const INPUT: &str = include_str!("../../inputs/day14.txt");
+pub(crate) const INPUT: &str = include_str!("../inputs/day14.txt");
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 enum Cell {
@@ -121,7 +120,7 @@ fn next(sx: usize, sy: usize, grid: &Grid) -> Option<(usize, usize)> {
     }
 }
 
-fn part1(input: &str) -> usize {
+pub(crate) fn part1(input: &str) -> usize {
     let lines = parse_lines(input);
     let mut grid = Grid::from_lines(&lines);
 
@@ -144,7 +143,7 @@ fn part1(input: &str) -> usize {
     result
 }
 
-fn part2(input: &str) -> usize {
+pub(crate) fn part2(input: &str) -> usize {
     let lines = parse_lines(input);
     let grid = Grid::from_lines(&lines);
 
@@ -170,11 +169,6 @@ fn part2(input: &str) -> usize {
     }
 
     result
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

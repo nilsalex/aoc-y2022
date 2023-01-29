@@ -1,13 +1,11 @@
-#![feature(test)]
-#![feature(byte_slice_trim_ascii)]
 extern crate test;
 
 use itertools::Itertools;
 
-pub const INPUT: &[u8] = include_bytes!("../../inputs/day03.txt");
+pub const INPUT: &[u8] = include_bytes!("../inputs/day03.txt");
 pub const NEWLINE: u8 = 10;
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     input
         .trim_ascii_end()
         .split(|byte| *byte == NEWLINE)
@@ -30,7 +28,7 @@ fn part1(input: &[u8]) -> usize {
         .sum()
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let lines = input.trim_ascii_end().split(|byte| *byte == NEWLINE);
 
     lines
@@ -52,11 +50,6 @@ fn part2(input: &[u8]) -> usize {
             _ => (common - 96) as usize,
         })
         .sum()
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

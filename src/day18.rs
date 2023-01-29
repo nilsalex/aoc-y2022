@@ -1,12 +1,10 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
 use bitvec::bitvec;
 use bitvec::prelude::BitVec;
 use std::collections::VecDeque;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day18.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day18.txt");
 
 const GRID_SIZE: usize = 23;
 const GRID_CENTRE_DOUBLED: usize = 23;
@@ -89,7 +87,7 @@ impl Grid {
     }
 }
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     let grid = Grid::parse(input);
     let mut neighbours_buffer: Vec<(usize, usize, usize)> = vec![(0, 0, 0); 6];
 
@@ -102,7 +100,7 @@ fn part1(input: &[u8]) -> usize {
     })
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let grid = Grid::parse(input);
     let mut neighbours_buffer: Vec<(usize, usize, usize)> = vec![(0, 0, 0); 6];
 
@@ -137,11 +135,6 @@ fn part2(input: &[u8]) -> usize {
     }
 
     surface_area
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

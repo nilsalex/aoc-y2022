@@ -1,9 +1,6 @@
-#![feature(test)]
-#![feature(byte_slice_trim_ascii)]
+pub const INPUT: &[u8] = include_bytes!("../inputs/day02.txt");
 
-pub const INPUT: &[u8] = include_bytes!("../../inputs/day02.txt");
-
-fn part1(input: &[u8]) -> u32 {
+pub(crate) fn part1(input: &[u8]) -> u32 {
     input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
@@ -15,7 +12,7 @@ fn part1(input: &[u8]) -> u32 {
         .sum()
 }
 
-fn part2(input: &[u8]) -> u32 {
+pub(crate) fn part2(input: &[u8]) -> u32 {
     input
         .split_inclusive(|byte| *byte == b'\n')
         .map(|bytes| {
@@ -24,11 +21,6 @@ fn part2(input: &[u8]) -> u32 {
             (1 + 3 * b + (a + b + 2) % 3) as u32
         })
         .sum()
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

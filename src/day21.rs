@@ -1,9 +1,8 @@
-#![feature(test)]
 extern crate test;
 
 use std::collections::HashMap;
 
-const INPUT: &str = include_str!("../../inputs/day21.txt");
+pub(crate) const INPUT: &str = include_str!("../inputs/day21.txt");
 
 #[derive(Debug)]
 enum Monkey {
@@ -140,7 +139,7 @@ fn parse_monkeys(input: &str) -> ParseMonkeyResult {
     }
 }
 
-fn part1(input: &str) -> i64 {
+pub(crate) fn part1(input: &str) -> i64 {
     let ParseMonkeyResult {
         monkeys,
         mut monkey_values,
@@ -167,7 +166,7 @@ fn part1(input: &str) -> i64 {
     *monkey_values.get("root").unwrap()
 }
 
-fn part2(input: &str) -> i64 {
+pub(crate) fn part2(input: &str) -> i64 {
     let ParseMonkeyResult {
         monkeys,
         mut monkey_values,
@@ -224,11 +223,6 @@ fn part2(input: &str) -> i64 {
     }
 
     result
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

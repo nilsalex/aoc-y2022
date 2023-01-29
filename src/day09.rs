@@ -1,10 +1,8 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
 use std::collections::HashSet;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day09.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day09.txt");
 
 const POWERS_OF_TEN: [u8; 3] = [1, 10, 100];
 
@@ -16,7 +14,7 @@ fn u8_from_bytes(bytes: &[u8]) -> u8 {
         .fold(0, |acc, (ix, x)| acc + (x - b'0') * POWERS_OF_TEN[ix])
 }
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     let mut head: (i16, i16) = (0, 0);
     let mut tail: (i16, i16) = (0, 0);
     let mut visited: HashSet<(i16, i16)> = HashSet::new();
@@ -47,7 +45,7 @@ fn part1(input: &[u8]) -> usize {
     visited.len()
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let mut rope: [i32; 20] = [0; 20];
     let mut visited: HashSet<u64> = HashSet::new();
     visited.insert((((rope[18] as u32) as u64) << 32) | ((rope[19] as u32) as u64));
@@ -80,11 +78,6 @@ fn part2(input: &[u8]) -> usize {
     }
 
     visited.len()
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

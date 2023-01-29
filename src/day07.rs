@@ -1,10 +1,8 @@
-#![feature(test)]
-#![feature(iter_intersperse)]
 extern crate test;
 
 use std::collections::HashMap;
 
-const INPUT: &str = include_str!("../../inputs/day07.txt");
+pub(crate) const INPUT: &str = include_str!("../inputs/day07.txt");
 
 fn total_size(
     dir_name: &str,
@@ -81,7 +79,7 @@ impl DirectoryTree {
     }
 }
 
-fn part1(input: &str) -> usize {
+pub(crate) fn part1(input: &str) -> usize {
     let directory_tree = DirectoryTree::parse(input);
 
     let mut result = 0;
@@ -96,7 +94,7 @@ fn part1(input: &str) -> usize {
     result
 }
 
-fn part2(input: &str) -> usize {
+pub(crate) fn part2(input: &str) -> usize {
     let directory_tree = DirectoryTree::parse(input);
 
     let free_space =
@@ -115,11 +113,6 @@ fn part2(input: &str) -> usize {
         .min_by(|(diff1, _), (diff2, _)| diff1.cmp(diff2))
         .unwrap()
         .1 as usize
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

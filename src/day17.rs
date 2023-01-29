@@ -1,10 +1,8 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
 use std::collections::HashSet;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day17.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day17.txt");
 
 #[derive(Copy, Clone, Debug)]
 enum Instruction {
@@ -131,7 +129,7 @@ fn fall(
     FallResult::Moving
 }
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     let instructions = Instructions::from_bytes(input);
 
     let mut rocks: HashSet<(usize, usize)> = HashSet::new();
@@ -164,7 +162,7 @@ fn part1(input: &[u8]) -> usize {
     height
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let instructions = Instructions::from_bytes(input);
 
     let mut rocks: HashSet<(usize, usize)> = HashSet::new();
@@ -232,11 +230,6 @@ fn part2(input: &[u8]) -> usize {
     let sum_after: usize = diffs.iter().skip(before).take(after).sum();
 
     sum_before + sum_fitting + sum_after
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

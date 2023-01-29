@@ -1,9 +1,8 @@
-#![feature(test)]
 extern crate test;
 
 use std::cmp::Ordering;
 
-const INPUT: &str = include_str!("../../inputs/day20.txt");
+pub(crate) const INPUT: &str = include_str!("../inputs/day20.txt");
 
 fn solution(input: &str, decryption_key: isize, cycles: usize) -> isize {
     let numbers = input
@@ -58,17 +57,12 @@ fn solution(input: &str, decryption_key: isize, cycles: usize) -> isize {
         + result[(position_zero + 3000).rem_euclid(numbers.len())]
 }
 
-fn part1(input: &str) -> isize {
+pub(crate) fn part1(input: &str) -> isize {
     solution(input, 1, 1)
 }
 
-fn part2(input: &str) -> isize {
+pub(crate) fn part2(input: &str) -> isize {
     solution(input, 811589153, 10)
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

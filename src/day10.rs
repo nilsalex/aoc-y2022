@@ -1,8 +1,6 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day10.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day10.txt");
 
 const POWERS_OF_TEN: [i8; 3] = [1, 10, 100];
 
@@ -23,7 +21,7 @@ fn i8_from_bytes(bytes: &[u8]) -> i8 {
     }
 }
 
-fn part1(input: &[u8]) -> isize {
+pub(crate) fn part1(input: &[u8]) -> isize {
     input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
@@ -52,7 +50,7 @@ fn part1(input: &[u8]) -> isize {
         .2
 }
 
-fn part2(input: &[u8]) -> String {
+pub(crate) fn part2(input: &[u8]) -> String {
     let mut register: isize = 1;
     let mut cycle: usize = 0;
     let mut crt_row: usize;
@@ -86,11 +84,6 @@ fn part2(input: &[u8]) -> String {
         out.push('\n');
     }
     out
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

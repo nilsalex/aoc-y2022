@@ -1,9 +1,8 @@
-#![feature(test)]
 extern crate test;
 
 use regex::Regex;
 
-const INPUT: &str = include_str!("../../inputs/day19.txt");
+pub(crate) const INPUT: &str = include_str!("../inputs/day19.txt");
 
 #[derive(Debug, Clone)]
 enum Robot {
@@ -272,7 +271,7 @@ fn parse_blueprints(input: &str, max_blueprints: Option<usize>) -> Vec<Blueprint
         .collect::<Vec<Blueprint>>()
 }
 
-fn part1(input: &str) -> usize {
+pub(crate) fn part1(input: &str) -> usize {
     let blueprints = parse_blueprints(input, None);
 
     blueprints
@@ -283,18 +282,13 @@ fn part1(input: &str) -> usize {
         .sum()
 }
 
-fn part2(input: &str) -> usize {
+pub(crate) fn part2(input: &str) -> usize {
     let blueprints = parse_blueprints(input, Some(3));
 
     blueprints
         .iter()
         .map(|blueprint: &Blueprint| State::new_with_one_ore(32).dfs(0, blueprint) as usize)
         .product()
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

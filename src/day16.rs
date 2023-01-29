@@ -1,12 +1,10 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::fmt::Debug;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day16.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day16.txt");
 
 type Vertex = u16;
 type Edge = (Vertex, Vertex);
@@ -302,7 +300,7 @@ fn max_cumulative_flow(graph: &FullyConnectedGraph, initial_state: &StateV2) -> 
     best
 }
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     let initial_graph = InitialGraph::parse(input);
     let graph = FullyConnectedGraph::from_initial_graph(&initial_graph);
 
@@ -316,7 +314,7 @@ fn part1(input: &[u8]) -> usize {
     max_cumulative_flow(&graph, &initial_state)
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let initial_graph = InitialGraph::parse(input);
     let graph = FullyConnectedGraph::from_initial_graph(&initial_graph);
 
@@ -328,11 +326,6 @@ fn part2(input: &[u8]) -> usize {
     };
 
     max_cumulative_flow(&graph, &initial_state)
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

@@ -1,8 +1,6 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day25.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day25.txt");
 
 const SNAFU_DIGIT_ARRAY: [isize; 62] = build_snafu_digit_array();
 const INVERTED_SNAFU_DIGIT_ARRAY: [u8; 5] = *b"=-012";
@@ -51,17 +49,13 @@ const fn to_snafu(decimal: isize) -> [u8; 26] {
     snafu
 }
 
-fn part1(input: &[u8]) -> [u8; 26] {
+pub(crate) fn part1(input: &[u8]) -> [u8; 26] {
     to_snafu(
         input
             .split(|byte| *byte == b'\n')
             .map(from_snafu)
             .sum::<isize>(),
     )
-}
-
-fn main() {
-    println!("{}", std::str::from_utf8(&part1(INPUT)).unwrap());
 }
 
 #[cfg(test)]

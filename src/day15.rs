@@ -1,9 +1,8 @@
-#![feature(test)]
 extern crate test;
 
 use regex::Regex;
 
-const INPUT: &str = include_str!("../../inputs/day15.txt");
+pub(crate) const INPUT: &str = include_str!("../inputs/day15.txt");
 
 #[derive(Debug)]
 struct Sensor {
@@ -53,7 +52,7 @@ fn parse_sensors(input: &str) -> Vec<Sensor> {
         .collect()
 }
 
-fn part1(input: &str) -> usize {
+pub(crate) fn part1(input: &str) -> usize {
     let sensors = parse_sensors(input);
 
     let (left, right) = sensors
@@ -89,7 +88,7 @@ fn part1(input: &str) -> usize {
     result
 }
 
-fn part2(input: &str) -> usize {
+pub(crate) fn part2(input: &str) -> usize {
     let sensors = parse_sensors(input);
 
     let max_dimensions: isize = 4000000;
@@ -109,11 +108,6 @@ fn part2(input: &str) -> usize {
     }
 
     panic!()
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

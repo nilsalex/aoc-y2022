@@ -1,8 +1,6 @@
-#![feature(byte_slice_trim_ascii)]
-#![feature(test)]
 extern crate test;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day24.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day24.txt");
 const MAX_NUM_ROWS: usize = 32;
 
 const fn shift_bits_right_with_wrapping(bits: u128, num_bits: usize) -> u128 {
@@ -120,7 +118,7 @@ impl Grid {
     }
 }
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     let mut grid = Grid::parse(input);
     grid.start_bit = true;
 
@@ -133,7 +131,7 @@ fn part1(input: &[u8]) -> usize {
     time
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     let mut grid = Grid::parse(input);
     let mut time = 0;
 
@@ -160,11 +158,6 @@ fn part2(input: &[u8]) -> usize {
     }
 
     time
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]

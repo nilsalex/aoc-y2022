@@ -1,8 +1,6 @@
-#![feature(test)]
-#![feature(byte_slice_trim_ascii)]
 extern crate test;
 
-const INPUT: &[u8] = include_bytes!("../../inputs/day04.txt");
+pub(crate) const INPUT: &[u8] = include_bytes!("../inputs/day04.txt");
 
 const POWERS_OF_TEN: [u8; 3] = [1, 10, 100];
 
@@ -25,7 +23,7 @@ fn numbers_from_line(bytes: &[u8]) -> (u8, u8, u8, u8) {
     )
 }
 
-fn part1(input: &[u8]) -> usize {
+pub(crate) fn part1(input: &[u8]) -> usize {
     input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
@@ -34,18 +32,13 @@ fn part1(input: &[u8]) -> usize {
         .count()
 }
 
-fn part2(input: &[u8]) -> usize {
+pub(crate) fn part2(input: &[u8]) -> usize {
     input
         .trim_ascii_end()
         .split(|byte| *byte == b'\n')
         .map(numbers_from_line)
         .filter(|(a, b, c, d)| !(a < c && b < c || c < a && d < a))
         .count()
-}
-
-fn main() {
-    println!("{}", part1(INPUT));
-    println!("{}", part2(INPUT));
 }
 
 #[cfg(test)]
